@@ -115,12 +115,12 @@ pbj_header : (STRING_LITERAL -> WS["\n"])
 
 
 package
-   :   ( PACKAGELITERAL QUALIFIEDIDENTIFIER ITEM_TERMINATOR -> PACKAGELITERAL WS[" "] QUALIFIEDIDENTIFIER QUALIFIEDIDENTIFIER["."] QUALIFIEDIDENTIFIER[SCOPE_TOP(NameSpace)->externalNamespace->chars] QUALIFIEDIDENTIFIER[SCOPE_TOP(NameSpace)->internalNamespace->chars] ITEM_TERMINATOR WS["\n"])
+   :   ( PACKAGELITERAL packageident ITEM_TERMINATOR -> PACKAGELITERAL WS[" "] packageident QUALIFIEDIDENTIFIER["."] QUALIFIEDIDENTIFIER[SCOPE_TOP(NameSpace)->externalNamespace->chars] QUALIFIEDIDENTIFIER[SCOPE_TOP(NameSpace)->internalNamespace->chars] ITEM_TERMINATOR WS["\n"])
         {
-            definePackage( ctx, $QUALIFIEDIDENTIFIER.text );
+            definePackage( ctx, $packageident.text );
         }
 	;
-
+packageident: (QUALIFIEDIDENTIFIER|IDENTIFIER);
 importrule
    :   ( IMPORTLITERAL STRING_LITERAL ITEM_TERMINATOR -> IMPORTLITERAL WS[" "] STRING_LITERAL ITEM_TERMINATOR WS["\n"] )
         {
