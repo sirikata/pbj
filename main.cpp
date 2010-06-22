@@ -9,7 +9,7 @@ extern "C" {
 
 int main(int argc, char *argv[])
 {
-    
+
     pANTLR3_UINT8 filename;
     pANTLR3_INPUT_STREAM input;
     pPBJLexer lxr;
@@ -30,8 +30,9 @@ int main(int argc, char *argv[])
     int argindex;
     const char *outputInternalNamespace="_PBJ_Internal";
     const char *outputExternalNamespace="";
+    const char *prefix = NULL;
     for (argindex=3;argindex<argc;++argindex) {
-        
+
         if (strncmp(argv[argindex],"--cpp=",6)==0) {
             cppOut=argv[argindex]+6;
         }
@@ -47,8 +48,11 @@ int main(int argc, char *argv[])
         if (strncmp(argv[argindex],"--namespace=",12)==0) {
             outputExternalNamespace=argv[argindex]+12;
         }
+        if (strncmp(argv[argindex],"--prefix=",9)==0) {
+            prefix=argv[argindex]+9;
+        }
     }
-    
+
     input = antlr3AsciiFileStreamNew(filename);
     if ( input == NULL ) {
         fprintf(stderr, "Failed to open file %s\n", (char *)filename);
@@ -79,8 +83,15 @@ int main(int argc, char *argv[])
     SCOPE_TOP(NameSpace)->internalNamespace->append8(SCOPE_TOP(NameSpace)->internalNamespace,(const char*)outputInternalNamespace);
     SCOPE_TOP(NameSpace)->externalNamespace=tstream->tstream->tokenSource->strFactory->newRaw(tstream->tstream->tokenSource->strFactory);
     SCOPE_TOP(NameSpace)->externalNamespace->append8(SCOPE_TOP(NameSpace)->externalNamespace,(const char*)outputExternalNamespace);
+    if (prefix == NULL) {
+        SCOPE_TOP(NameSpace)->prefix = NULL;
+    }
+    else {
+        SCOPE_TOP(NameSpace)->prefix=tstream->tstream->tokenSource->strFactory->newRaw(tstream->tstream->tokenSource->strFactory);
+        SCOPE_TOP(NameSpace)->prefix->append8(SCOPE_TOP(NameSpace)->prefix,(const char*)prefix);
+    }
     if (strlen(outputExternalNamespace)) {
-        SCOPE_TOP(NameSpace)->externalNamespace->append8(SCOPE_TOP(NameSpace)->externalNamespace,".");        
+        SCOPE_TOP(NameSpace)->externalNamespace->append8(SCOPE_TOP(NameSpace)->externalNamespace,".");
     }
 
     SCOPE_TOP(NameSpace)->output=(struct LanguageOutputStruct*)malloc(sizeof(struct LanguageOutputStruct));
@@ -91,7 +102,7 @@ int main(int argc, char *argv[])
         cppOutStream.open(cppOut,std::ios_base::out);
         SCOPE_TOP(NameSpace)->output->cpp=&cppOutStream;
     }
-            
+
     if (csOut) {
         csOutStream.open(csOut,std::ios_base::out);
         SCOPE_TOP(NameSpace)->output->cs=&csOutStream;
@@ -103,7 +114,7 @@ int main(int argc, char *argv[])
     if (psr->pParser->rec->getNumberOfSyntaxErrors(psr->pParser->rec) > 0)
     {
         ANTLR3_FPRINTF(stderr, "The parser returned %d errors, tree walking aborted.\n", psr->pParser->rec->getNumberOfSyntaxErrors(psr->pParser->rec));
- 
+
     }
     else
     {

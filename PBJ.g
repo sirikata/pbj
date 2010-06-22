@@ -51,6 +51,7 @@ scope NameSpace {
     pANTLR3_STRING internalNamespace;
     pANTLR3_STRING package;
     pANTLR3_LIST imports;
+    pANTLR3_STRING prefix;
 }
 
 scope Symbols {
@@ -104,10 +105,10 @@ error_header : ((DOT?)->WS["\n"])
 pbj_header : (STRING_LITERAL -> WS["\n"])
     {
             if (strncmp((char*)$STRING_LITERAL.text->chars,"\"pbj-0.0.3\"",9)==0&&$STRING_LITERAL.text->chars[9]<='9'&&$STRING_LITERAL.text->chars[9]>='3') {
-                
+
             }else {
 
-                fprintf(stderr,"error: line \%d: pbj version \%s not understood--this compiler understands \"pbj-0.0.3\"\n",$STRING_LITERAL->line,$STRING_LITERAL.text->chars);  
+                fprintf(stderr,"error: line \%d: pbj version \%s not understood--this compiler understands \"pbj-0.0.3\"\n",$STRING_LITERAL->line,$STRING_LITERAL.text->chars);
                 exit(1);
             }
     }
@@ -121,13 +122,15 @@ package
         }
 	;
 
+
+// The following is a bit confusing: the transformation converts into a .proto for writing the .proto file.  However, this (apparently) doesn't change the
+// AST that's generated, which still has the .pbj version.  Therefore, we strip the .pbj again when we call defineImport.
 importrule
-   :   ( IMPORTLITERAL STRING_LITERAL ITEM_TERMINATOR -> IMPORTLITERAL WS[" "] STRING_LITERAL ITEM_TERMINATOR WS["\n"] )
+   :   (IMPORTLITERAL STRING_LITERAL ITEM_TERMINATOR -> IMPORTLITERAL WS[" "] STRING_LITERAL[{protoImportFromPBJToken(ctx, $STRING_LITERAL)}] ITEM_TERMINATOR WS["\n"] )
         {
-            defineImport( ctx, $STRING_LITERAL.text );
+            defineImport( ctx, stripPBJExtension($STRING_LITERAL.text) );
         }
 	;
-
 
 message
     scope {
@@ -143,7 +146,7 @@ message
         }
 	;
 
-message_or_extend : 
+message_or_extend :
         MESSAGE {$message::isExtension=0;}
         |
         EXTEND {$message::isExtension=1;}
@@ -165,7 +168,7 @@ message_elements
     scope Symbols;
     @init
     {
-        initSymbolTable(SCOPE_TOP(Symbols), $message::messageName, $message::isExtension);  
+        initSymbolTable(SCOPE_TOP(Symbols), $message::messageName, $message::isExtension);
     }
 	:	message_element*
     {
@@ -187,7 +190,7 @@ message_element
 	;
 
 extensions
-        : 
+        :
         ( EXTENSIONS integer TO integer_inclusive ITEM_TERMINATOR -> WS["\t"] EXTENSIONS WS[" "] integer WS[" "] TO WS[" "] integer_inclusive ITEM_TERMINATOR WS["\n"] )
         {
             defineExtensionRange(ctx, $integer.text, $integer_inclusive.text);
@@ -200,9 +203,9 @@ reservations : (RESERVE integer TO integer_inclusive ITEM_TERMINATOR -> )
         }
         ;
 
-integer_inclusive : integer 
+integer_inclusive : integer
         {
-            
+
         }
         ;
 
@@ -244,7 +247,7 @@ flags_def
     }
     @init {
         $flags_def::flagList=antlr3ListNew(1);
-        
+
     }
 	:	( flags flag_identifier BLOCK_OPEN flag_element+ BLOCK_CLOSE -> WS["\t"] ENUM["enum"] WS[" "] flag_identifier WS[" "] BLOCK_OPEN WS["\n"] (WS["\t"] flag_element)+ WS["\t"] BLOCK_CLOSE WS["\n"] )
         {
@@ -254,7 +257,7 @@ flags_def
         }
 	;
 
-flag_identifier 
+flag_identifier
 	:	IDENTIFIER
         {
             $flags_def::flagName=stringDup($IDENTIFIER.text);
@@ -287,9 +290,9 @@ field
     }
      |
      (( (PBJOPTIONAL field_type field_name EQUALS field_offset default_value? ITEM_TERMINATOR )  -> WS["\t"] PBJOPTIONAL WS[" "] field_type WS[" "] field_name WS[" "] EQUALS WS[" "] field_offset WS[" "] default_value ITEM_TERMINATOR WS["\n"] )
-      | 
-      ( ( (REQUIRED|REPEATED) field_type field_name EQUALS field_offset ITEM_TERMINATOR ) 
-          -> {$field::isNumericType && $REQUIRED==NULL}?WS["\t"] REPEATED WS[" "] field_type WS[" "] field_name WS[" "] EQUALS WS[" "] field_offset  WS[" "] SQBRACKET_OPEN["["] IDENTIFIER["packed"] EQUALS["="] BOOL_LITERAL["true"] SQBRACKET_CLOSE["]"] ITEM_TERMINATOR WS["\n"]  
+      |
+      ( ( (REQUIRED|REPEATED) field_type field_name EQUALS field_offset ITEM_TERMINATOR )
+          -> {$field::isNumericType && $REQUIRED==NULL}?WS["\t"] REPEATED WS[" "] field_type WS[" "] field_name WS[" "] EQUALS WS[" "] field_offset  WS[" "] SQBRACKET_OPEN["["] IDENTIFIER["packed"] EQUALS["="] BOOL_LITERAL["true"] SQBRACKET_CLOSE["]"] ITEM_TERMINATOR WS["\n"]
           -> WS["\t"] REQUIRED REPEATED WS[" "] field_type WS[" "] field_name WS[" "] EQUALS WS[" "] field_offset ITEM_TERMINATOR WS["\n"] ) )
     {
         defineField(ctx, $field::fieldType,$field::fieldName,$field::defaultValue,$field::fieldOffset,$REPEATED==NULL,$REQUIRED!=NULL,0);
@@ -302,7 +305,7 @@ field
 field_offset
     : integer
     {
-        
+
         $field::fieldOffset=atoi((char*)($integer.text->chars));
     }
     ;
@@ -335,28 +338,44 @@ field_type
        $field::isNumericType=0;
        $field::fieldType=stringDup($advanced_array_type.text);
     }
-    | ( IDENTIFIER 
+    | ( IDENTIFIER
         -> {SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$IDENTIFIER.text->chars)!=NULL
             && *(unsigned int*)SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$IDENTIFIER.text->chars)<28}?
-              UINT32["uint32"] 
+              UINT32["uint32"]
         -> {SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$IDENTIFIER.text->chars)!=NULL
             && *(unsigned int*)SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$IDENTIFIER.text->chars)<=32}?
-              UINT32["uint32"] 
+              UINT32["uint32"]
         -> {SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$IDENTIFIER.text->chars)!=NULL
             && *(unsigned int*)SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$IDENTIFIER.text->chars)==64}?
-             UINT64["uint64"] 
+             UINT64["uint64"]
         -> IDENTIFIER )
     {
        $field::isNumericType=(SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$IDENTIFIER.text->chars)!=NULL||
                                 SCOPE_TOP(Symbols)->enum_sizes->get(SCOPE_TOP(Symbols)->enum_sizes,$IDENTIFIER.text->chars)!=NULL);
        $field::fieldType=stringDup($IDENTIFIER.text);
     }
+    | ( QUALIFIEDIDENTIFIER
+        -> {SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$QUALIFIEDIDENTIFIER.text->chars)!=NULL
+            && *(unsigned int*)SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$QUALIFIEDIDENTIFIER.text->chars)<28}?
+              UINT32["uint32"]
+        -> {SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$QUALIFIEDIDENTIFIER.text->chars)!=NULL
+            && *(unsigned int*)SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$QUALIFIEDIDENTIFIER.text->chars)<=32}?
+              UINT32["uint32"]
+        -> {SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$QUALIFIEDIDENTIFIER.text->chars)!=NULL
+            && *(unsigned int*)SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$QUALIFIEDIDENTIFIER.text->chars)==64}?
+             UINT64["uint64"]
+        -> QUALIFIEDIDENTIFIER[{replaceImportedMessageType(ctx, $QUALIFIEDIDENTIFIER)}] )
+    {
+       $field::isNumericType=(SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$QUALIFIEDIDENTIFIER.text->chars)!=NULL||
+                                SCOPE_TOP(Symbols)->enum_sizes->get(SCOPE_TOP(Symbols)->enum_sizes,$QUALIFIEDIDENTIFIER.text->chars)!=NULL);
+       $field::fieldType=filterImportedMessageType($QUALIFIEDIDENTIFIER.text);
+    }
     ;
 multiplicitive_type
-    : 
-    multiplicitive_advanced_type 
+    :
+    multiplicitive_advanced_type
     {
-       $field::fieldType=stringDup($multiplicitive_advanced_type.text);        
+       $field::fieldType=stringDup($multiplicitive_advanced_type.text);
     }
     ;
 
@@ -417,11 +436,11 @@ advanced_numeric_type:	UINT8 -> UINT32["uint32"]
     |   ANGLE -> FLOAT["float"]
     |   TIME -> FIXED64["fixed64"]
     |   DURATION -> SFIXED64["sfixed64"]
-    ; 
+    ;
 
 advanced_array_type:	   UUID -> BYTES["bytes"]
     |   SHA256 -> BYTES["bytes"]
-    ; 
+    ;
 
 literal_value
 	:	HEX_LITERAL
@@ -446,7 +465,7 @@ TO : 'to';
 // Enum elements
 ENUM	:	'enum';
 
-flags : 
+flags :
      FLAGS8
      {
         $flags_def::flagBits=8;
