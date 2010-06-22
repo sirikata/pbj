@@ -34,7 +34,7 @@
 #define _PBJ_PARSE_UTIL_H_
 #ifdef __cplusplus
 extern "C" {
-#endif 
+#endif
 #undef	SCOPE_TYPE
 #undef	SCOPE_STACK
 #undef	SCOPE_TOP
@@ -50,6 +50,13 @@ extern "C" {
 #define SCOPE_INSTANCE(scope, i)	(ctx->SCOPE_STACK(scope)->get(ctx->SCOPE_STACK(scope),i))
 typedef struct LanguageOutputStruct LanguageOutput;
 typedef struct CsStreams CsStreamOutput;
+
+
+    pANTLR3_UINT8 protoImportFromPBJToken(pPBJParser ctx, pANTLR3_COMMON_TOKEN name);
+    pANTLR3_STRING stripPBJExtension(pANTLR3_STRING name);
+
+    pANTLR3_UINT8 replaceImportedMessageType(pPBJParser ctx, pANTLR3_COMMON_TOKEN name);
+    pANTLR3_STRING filterImportedMessageType(pANTLR3_STRING name);
 
 void initSymbolTable(SCOPE_TYPE(Symbols) symtab, pANTLR3_STRING msgId, int isExtension);
 void initNameSpace(pPBJParser ctx, SCOPE_TYPE(NameSpace) symtab);
@@ -81,5 +88,5 @@ pANTLR3_STRING defaultValuePreprocess(pPBJParser ctx, pANTLR3_STRING type, pANTL
 ANTLR3_BOOLEAN isTypeName(pPBJParser ctx, pANTLR3_UINT8 name);
 #ifdef __cplusplus
 }
-#endif 
+#endif
 #endif //_PBJ_PARSE_UTIL_H_

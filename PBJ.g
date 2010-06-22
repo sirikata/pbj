@@ -51,6 +51,7 @@ scope NameSpace {
     pANTLR3_STRING internalNamespace;
     pANTLR3_STRING package;
     pANTLR3_LIST imports;
+    pANTLR3_STRING prefix;
 }
 
 scope Symbols {
@@ -121,13 +122,15 @@ package
         }
 	;
 packageident: (QUALIFIEDIDENTIFIER|IDENTIFIER);
+
+// The following is a bit confusing: the transformation converts into a .proto for writing the .proto file.  However, this (apparently) doesn't change the
+// AST that's generated, which still has the .pbj version.  Therefore, we strip the .pbj again when we call defineImport.
 importrule
-   :   ( IMPORTLITERAL STRING_LITERAL ITEM_TERMINATOR -> IMPORTLITERAL WS[" "] STRING_LITERAL ITEM_TERMINATOR WS["\n"] )
+   :   (IMPORTLITERAL STRING_LITERAL ITEM_TERMINATOR -> IMPORTLITERAL WS[" "] STRING_LITERAL[{protoImportFromPBJToken(ctx, $STRING_LITERAL)}] ITEM_TERMINATOR WS["\n"] )
         {
-            defineImport( ctx, $STRING_LITERAL.text );
+            defineImport( ctx, stripPBJExtension($STRING_LITERAL.text) );
         }
 	;
-
 
 message
     scope {
@@ -335,7 +338,7 @@ field_type
        $field::isNumericType=0;
        $field::fieldType=stringDup($advanced_array_type.text);
     }
-    | ( IDENTIFIER 
+    | ( IDENTIFIER
         -> {SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$IDENTIFIER.text->chars)!=NULL
             && *(unsigned int*)SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$IDENTIFIER.text->chars)<28}?
               UINT32["uint32"] 
@@ -350,6 +353,22 @@ field_type
        $field::isNumericType=(SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$IDENTIFIER.text->chars)!=NULL||
                                 SCOPE_TOP(Symbols)->enum_sizes->get(SCOPE_TOP(Symbols)->enum_sizes,$IDENTIFIER.text->chars)!=NULL);
        $field::fieldType=stringDup($IDENTIFIER.text);
+    }
+    | ( QUALIFIEDIDENTIFIER
+        -> {SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$QUALIFIEDIDENTIFIER.text->chars)!=NULL
+            && *(unsigned int*)SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$QUALIFIEDIDENTIFIER.text->chars)<28}?
+              UINT32["uint32"] 
+        -> {SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$QUALIFIEDIDENTIFIER.text->chars)!=NULL
+            && *(unsigned int*)SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$QUALIFIEDIDENTIFIER.text->chars)<=32}?
+              UINT32["uint32"] 
+        -> {SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$QUALIFIEDIDENTIFIER.text->chars)!=NULL
+            && *(unsigned int*)SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$QUALIFIEDIDENTIFIER.text->chars)==64}?
+             UINT64["uint64"] 
+        -> QUALIFIEDIDENTIFIER[{replaceImportedMessageType(ctx, $QUALIFIEDIDENTIFIER)}] )
+    {
+       $field::isNumericType=(SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$QUALIFIEDIDENTIFIER.text->chars)!=NULL||
+                                SCOPE_TOP(Symbols)->enum_sizes->get(SCOPE_TOP(Symbols)->enum_sizes,$QUALIFIEDIDENTIFIER.text->chars)!=NULL);
+       $field::fieldType=filterImportedMessageType($QUALIFIEDIDENTIFIER.text);
     }
     ;
 multiplicitive_type
