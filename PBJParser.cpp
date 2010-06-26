@@ -2882,9 +2882,9 @@ importrule(pPBJParser ctx)
                 	    );
                 	    ADAPTOR->addChild(ADAPTOR, root_0, 
                 	    #if 1 == 2
-                	    	(pANTLR3_BASE_TREE)ADAPTOR->createTypeTokenText(ADAPTOR, STRING_LITERAL, TOKTEXT({protoImportFromPBJToken(ctx, STRING_LITERAL16)}))
+                	    	(pANTLR3_BASE_TREE)ADAPTOR->createTypeTokenText(ADAPTOR, STRING_LITERAL, TOKTEXT(protoImportFromPBJToken(ctx, STRING_LITERAL16)))
                 	    #else
-                	    	(pANTLR3_BASE_TREE)ADAPTOR->createTypeText(ADAPTOR, STRING_LITERAL, (pANTLR3_UINT8){protoImportFromPBJToken(ctx, STRING_LITERAL16)})
+                	    	(pANTLR3_BASE_TREE)ADAPTOR->createTypeText(ADAPTOR, STRING_LITERAL, (pANTLR3_UINT8)protoImportFromPBJToken(ctx, STRING_LITERAL16))
                 	    #endif
                 	    );
                 	    ADAPTOR->addChild(ADAPTOR, root_0, stream_ITEM_TERMINATOR == NULL ? NULL : stream_ITEM_TERMINATOR->nextNode(stream_ITEM_TERMINATOR));
@@ -7365,9 +7365,9 @@ field_type(pPBJParser ctx)
         	            	{
         	            	    ADAPTOR->addChild(ADAPTOR, root_0, 
         	            	    #if 1 == 2
-        	            	    	(pANTLR3_BASE_TREE)ADAPTOR->createTypeTokenText(ADAPTOR, QUALIFIEDIDENTIFIER, TOKTEXT({replaceImportedMessageType(ctx, QUALIFIEDIDENTIFIER99)}))
+        	            	    	(pANTLR3_BASE_TREE)ADAPTOR->createTypeTokenText(ADAPTOR, QUALIFIEDIDENTIFIER, TOKTEXT(replaceImportedMessageType(ctx, QUALIFIEDIDENTIFIER99)))
         	            	    #else
-        	            	    	(pANTLR3_BASE_TREE)ADAPTOR->createTypeText(ADAPTOR, QUALIFIEDIDENTIFIER, (pANTLR3_UINT8){replaceImportedMessageType(ctx, QUALIFIEDIDENTIFIER99)})
+        	            	    	(pANTLR3_BASE_TREE)ADAPTOR->createTypeText(ADAPTOR, QUALIFIEDIDENTIFIER, (pANTLR3_UINT8)replaceImportedMessageType(ctx, QUALIFIEDIDENTIFIER99))
         	            	    #endif
         	            	    );
 
