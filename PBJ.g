@@ -126,7 +126,7 @@ packageident: (QUALIFIEDIDENTIFIER|IDENTIFIER);
 // The following is a bit confusing: the transformation converts into a .proto for writing the .proto file.  However, this (apparently) doesn't change the
 // AST that's generated, which still has the .pbj version.  Therefore, we strip the .pbj again when we call defineImport.
 importrule
-   :   (IMPORTLITERAL STRING_LITERAL ITEM_TERMINATOR -> IMPORTLITERAL WS[" "] STRING_LITERAL[{protoImportFromPBJToken(ctx, $STRING_LITERAL)}] ITEM_TERMINATOR WS["\n"] )
+   :   (IMPORTLITERAL STRING_LITERAL ITEM_TERMINATOR -> IMPORTLITERAL WS[" "] STRING_LITERAL[protoImportFromPBJToken(ctx, $STRING_LITERAL)] ITEM_TERMINATOR WS["\n"] )
         {
             defineImport( ctx, stripPBJExtension($STRING_LITERAL.text) );
         }
@@ -364,7 +364,7 @@ field_type
         -> {SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$QUALIFIEDIDENTIFIER.text->chars)!=NULL
             && *(unsigned int*)SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$QUALIFIEDIDENTIFIER.text->chars)==64}?
              UINT64["uint64"] 
-        -> QUALIFIEDIDENTIFIER[{replaceImportedMessageType(ctx, $QUALIFIEDIDENTIFIER)}] )
+        -> QUALIFIEDIDENTIFIER[replaceImportedMessageType(ctx, $QUALIFIEDIDENTIFIER)] )
     {
        $field::isNumericType=(SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$QUALIFIEDIDENTIFIER.text->chars)!=NULL||
                                 SCOPE_TOP(Symbols)->enum_sizes->get(SCOPE_TOP(Symbols)->enum_sizes,$QUALIFIEDIDENTIFIER.text->chars)!=NULL);
