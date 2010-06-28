@@ -724,6 +724,8 @@ const char *getCsType(pPBJParser ctx, pANTLR3_STRING type, pANTLR3_STRING emptyS
         return "PBJ.Duration";
     if (strcmp((char*)type->chars,"angle")==0)
         return "float";
+    if (strcmp((char*)type->chars,"solidangle")==0)
+        return "float";
     if (strcmp((char*)type->chars,"sint64")==0)
         return "long";
     if (strcmp((char*)type->chars,"int64")==0)
@@ -839,6 +841,8 @@ std::string getCppType(pPBJParser ctx, pANTLR3_STRING type, bool* isMessage = NU
         return "PBJ::Duration";
     if (strcmp((char*)type->chars,"angle")==0)
         return "float";
+    if (strcmp((char*)type->chars,"solidangle")==0)
+        return "PBJ::SolidAngle";
     if (strcmp((char*)type->chars,"sint64")==0)
         return "PBJ::int64";
     if (strcmp((char*)type->chars,"int64")==0)
@@ -941,6 +945,9 @@ std::string getPBJType(pPBJParser ctx, pANTLR3_STRING type) {
     if (strcmp((char*)type->chars,"angle")==0) {
         return "PBJ::angle";
     }
+    if (strcmp((char*)type->chars,"solidangle")==0) {
+        return "PBJ::SolidAngle";
+    }
     if (strcmp((char*)type->chars,"string")==0) {
         return "PBJ::utf8string";
     }
@@ -957,6 +964,9 @@ std::string getPBJType(pPBJParser ctx, pANTLR3_STRING type) {
 std::string getPBJCsType(pPBJParser ctx, pANTLR3_STRING type) {
     if (strcmp((char*)type->chars,"angle")==0) {
         return "PBJ.angle";
+    }
+    if (strcmp((char*)type->chars,"solidangle")==0) {
+        return "PBJ.solidangle";
     }
     if (strcmp((char*)type->chars,"string")==0) {
         return "PBJ.utf8string";

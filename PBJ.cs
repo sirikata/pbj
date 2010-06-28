@@ -1343,6 +1343,9 @@ public static bool ValidateUint32(uint d) {
 public static bool ValidateUint16(ushort d) {
     return true;
 }
+public static bool ValidateUint16(uint d) {
+    return (d >= UInt16.MinValue && d <= UInt16.MaxValue);
+}
 public static bool ValidateUint8(byte d) {
     return true;
 }
@@ -1355,6 +1358,9 @@ public static bool ValidateSint32(int d) {
 public static bool ValidateSint16(short d) {
     return true;
 }
+public static bool ValidateSint16(int d) {
+    return (d >= Int16.MinValue && d <= Int16.MaxValue);
+}
 public static bool ValidateSint8(sbyte d) {
     return true;
 }
@@ -1366,6 +1372,9 @@ public static bool ValidateInt32(int d) {
 }
 public static bool ValidateInt16(short d) {
     return true;
+}
+public static bool ValidateInt16(int d) {
+    return (d >= Int16.MinValue && d <= Int16.MaxValue);
 }
 public static bool ValidateInt8(sbyte d) {
     return true;
@@ -1384,6 +1393,9 @@ public static bool ValidateSha256(Google.ProtocolBuffers.ByteString input) {
 }
 public static bool ValidateAngle(float input) {
     return input>=0&&input<=3.1415926536*2.0;
+}
+public static bool ValidateSolidAngle(float input) {
+    return input>=0&&input<=3.1415926536*4.0;
 }
     public static bool ValidateTime(ulong input) {
         return true;
@@ -1416,6 +1428,12 @@ public static uint CastUint32(uint d) {
 public static ushort CastUint16(ushort d) {
     return d;
 }
+public static ushort CastUint16(uint d) {
+    if (d >= UInt16.MinValue && d <= UInt16.MaxValue)
+        return (ushort)d;
+    else
+        throw new System.ArgumentException("Stored value exceeds valid range for uint16.");
+}
 public static byte CastUint8(byte d) {
     return d;
 }
@@ -1428,6 +1446,12 @@ public static int CastSint32(int d) {
 public static short CastSint16(short d) {
     return d;
 }
+public static short CastSint16(int d) {
+    if (d >= Int16.MinValue && d <= Int16.MaxValue)
+        return (short)d;
+    else
+        throw new System.ArgumentException("Stored value exceeds valid range for sint16.");
+}
 public static sbyte CastSint8(sbyte d) {
     return d;
 }
@@ -1439,6 +1463,12 @@ public static int CastInt32(int d) {
 }
 public static short CastInt16(short d) {
     return d;
+}
+public static short CastInt16(int d) {
+    if (d >= Int16.MinValue && d <= Int16.MaxValue)
+        return (short)d;
+    else
+        throw new System.ArgumentException("Stored value exceeds valid range for sint16.");
 }
 public static sbyte CastInt8(sbyte d) {
     return d;
@@ -1628,6 +1658,13 @@ public static float CastAngle(float d) {
     return d;
 }
 public static float CastAngle() {
+    return 0;
+}
+
+public static float CastSolidAngle(float d) {
+    return d;
+}
+public static float CastSolidAngle() {
     return 0;
 }
 

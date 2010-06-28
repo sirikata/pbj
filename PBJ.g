@@ -105,10 +105,10 @@ error_header : ((DOT?)->WS["\n"])
 pbj_header : (STRING_LITERAL -> WS["\n"])
     {
             if (strncmp((char*)$STRING_LITERAL.text->chars,"\"pbj-0.0.3\"",9)==0&&$STRING_LITERAL.text->chars[9]<='9'&&$STRING_LITERAL.text->chars[9]>='3') {
-
+                
             }else {
 
-                fprintf(stderr,"error: line \%d: pbj version \%s not understood--this compiler understands \"pbj-0.0.3\"\n",$STRING_LITERAL->line,$STRING_LITERAL.text->chars);
+                fprintf(stderr,"error: line \%d: pbj version \%s not understood--this compiler understands \"pbj-0.0.3\"\n",$STRING_LITERAL->line,$STRING_LITERAL.text->chars);  
                 exit(1);
             }
     }
@@ -116,12 +116,12 @@ pbj_header : (STRING_LITERAL -> WS["\n"])
 
 
 package
-   :   ( PACKAGELITERAL QUALIFIEDIDENTIFIER ITEM_TERMINATOR -> PACKAGELITERAL WS[" "] QUALIFIEDIDENTIFIER QUALIFIEDIDENTIFIER["."] QUALIFIEDIDENTIFIER[SCOPE_TOP(NameSpace)->externalNamespace->chars] QUALIFIEDIDENTIFIER[SCOPE_TOP(NameSpace)->internalNamespace->chars] ITEM_TERMINATOR WS["\n"])
+   :   ( PACKAGELITERAL packageident ITEM_TERMINATOR -> PACKAGELITERAL WS[" "] packageident QUALIFIEDIDENTIFIER["."] QUALIFIEDIDENTIFIER[SCOPE_TOP(NameSpace)->externalNamespace->chars] QUALIFIEDIDENTIFIER[SCOPE_TOP(NameSpace)->internalNamespace->chars] ITEM_TERMINATOR WS["\n"])
         {
-            definePackage( ctx, $QUALIFIEDIDENTIFIER.text );
+            definePackage( ctx, $packageident.text );
         }
 	;
-
+packageident: (QUALIFIEDIDENTIFIER|IDENTIFIER);
 
 // The following is a bit confusing: the transformation converts into a .proto for writing the .proto file.  However, this (apparently) doesn't change the
 // AST that's generated, which still has the .pbj version.  Therefore, we strip the .pbj again when we call defineImport.
@@ -146,7 +146,7 @@ message
         }
 	;
 
-message_or_extend :
+message_or_extend : 
         MESSAGE {$message::isExtension=0;}
         |
         EXTEND {$message::isExtension=1;}
@@ -168,7 +168,7 @@ message_elements
     scope Symbols;
     @init
     {
-        initSymbolTable(SCOPE_TOP(Symbols), $message::messageName, $message::isExtension);
+        initSymbolTable(SCOPE_TOP(Symbols), $message::messageName, $message::isExtension);  
     }
 	:	message_element*
     {
@@ -190,7 +190,7 @@ message_element
 	;
 
 extensions
-        :
+        : 
         ( EXTENSIONS integer TO integer_inclusive ITEM_TERMINATOR -> WS["\t"] EXTENSIONS WS[" "] integer WS[" "] TO WS[" "] integer_inclusive ITEM_TERMINATOR WS["\n"] )
         {
             defineExtensionRange(ctx, $integer.text, $integer_inclusive.text);
@@ -203,9 +203,9 @@ reservations : (RESERVE integer TO integer_inclusive ITEM_TERMINATOR -> )
         }
         ;
 
-integer_inclusive : integer
+integer_inclusive : integer 
         {
-
+            
         }
         ;
 
@@ -247,7 +247,7 @@ flags_def
     }
     @init {
         $flags_def::flagList=antlr3ListNew(1);
-
+        
     }
 	:	( flags flag_identifier BLOCK_OPEN flag_element+ BLOCK_CLOSE -> WS["\t"] ENUM["enum"] WS[" "] flag_identifier WS[" "] BLOCK_OPEN WS["\n"] (WS["\t"] flag_element)+ WS["\t"] BLOCK_CLOSE WS["\n"] )
         {
@@ -257,7 +257,7 @@ flags_def
         }
 	;
 
-flag_identifier
+flag_identifier 
 	:	IDENTIFIER
         {
             $flags_def::flagName=stringDup($IDENTIFIER.text);
@@ -290,9 +290,9 @@ field
     }
      |
      (( (PBJOPTIONAL field_type field_name EQUALS field_offset default_value? ITEM_TERMINATOR )  -> WS["\t"] PBJOPTIONAL WS[" "] field_type WS[" "] field_name WS[" "] EQUALS WS[" "] field_offset WS[" "] default_value ITEM_TERMINATOR WS["\n"] )
-      |
-      ( ( (REQUIRED|REPEATED) field_type field_name EQUALS field_offset ITEM_TERMINATOR )
-          -> {$field::isNumericType && $REQUIRED==NULL}?WS["\t"] REPEATED WS[" "] field_type WS[" "] field_name WS[" "] EQUALS WS[" "] field_offset  WS[" "] SQBRACKET_OPEN["["] IDENTIFIER["packed"] EQUALS["="] BOOL_LITERAL["true"] SQBRACKET_CLOSE["]"] ITEM_TERMINATOR WS["\n"]
+      | 
+      ( ( (REQUIRED|REPEATED) field_type field_name EQUALS field_offset ITEM_TERMINATOR ) 
+          -> {$field::isNumericType && $REQUIRED==NULL}?WS["\t"] REPEATED WS[" "] field_type WS[" "] field_name WS[" "] EQUALS WS[" "] field_offset  WS[" "] SQBRACKET_OPEN["["] IDENTIFIER["packed"] EQUALS["="] BOOL_LITERAL["true"] SQBRACKET_CLOSE["]"] ITEM_TERMINATOR WS["\n"]  
           -> WS["\t"] REQUIRED REPEATED WS[" "] field_type WS[" "] field_name WS[" "] EQUALS WS[" "] field_offset ITEM_TERMINATOR WS["\n"] ) )
     {
         defineField(ctx, $field::fieldType,$field::fieldName,$field::defaultValue,$field::fieldOffset,$REPEATED==NULL,$REQUIRED!=NULL,0);
@@ -305,7 +305,7 @@ field
 field_offset
     : integer
     {
-
+        
         $field::fieldOffset=atoi((char*)($integer.text->chars));
     }
     ;
@@ -341,13 +341,13 @@ field_type
     | ( IDENTIFIER
         -> {SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$IDENTIFIER.text->chars)!=NULL
             && *(unsigned int*)SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$IDENTIFIER.text->chars)<28}?
-              UINT32["uint32"]
+              UINT32["uint32"] 
         -> {SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$IDENTIFIER.text->chars)!=NULL
             && *(unsigned int*)SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$IDENTIFIER.text->chars)<=32}?
-              UINT32["uint32"]
+              UINT32["uint32"] 
         -> {SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$IDENTIFIER.text->chars)!=NULL
             && *(unsigned int*)SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$IDENTIFIER.text->chars)==64}?
-             UINT64["uint64"]
+             UINT64["uint64"] 
         -> IDENTIFIER )
     {
        $field::isNumericType=(SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$IDENTIFIER.text->chars)!=NULL||
@@ -357,13 +357,13 @@ field_type
     | ( QUALIFIEDIDENTIFIER
         -> {SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$QUALIFIEDIDENTIFIER.text->chars)!=NULL
             && *(unsigned int*)SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$QUALIFIEDIDENTIFIER.text->chars)<28}?
-              UINT32["uint32"]
+              UINT32["uint32"] 
         -> {SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$QUALIFIEDIDENTIFIER.text->chars)!=NULL
             && *(unsigned int*)SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$QUALIFIEDIDENTIFIER.text->chars)<=32}?
-              UINT32["uint32"]
+              UINT32["uint32"] 
         -> {SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$QUALIFIEDIDENTIFIER.text->chars)!=NULL
             && *(unsigned int*)SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$QUALIFIEDIDENTIFIER.text->chars)==64}?
-             UINT64["uint64"]
+             UINT64["uint64"] 
         -> QUALIFIEDIDENTIFIER[{replaceImportedMessageType(ctx, $QUALIFIEDIDENTIFIER)}] )
     {
        $field::isNumericType=(SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$QUALIFIEDIDENTIFIER.text->chars)!=NULL||
@@ -372,10 +372,10 @@ field_type
     }
     ;
 multiplicitive_type
-    :
-    multiplicitive_advanced_type
+    : 
+    multiplicitive_advanced_type 
     {
-       $field::fieldType=stringDup($multiplicitive_advanced_type.text);
+       $field::fieldType=stringDup($multiplicitive_advanced_type.text);        
     }
     ;
 
@@ -434,13 +434,14 @@ advanced_numeric_type:	UINT8 -> UINT32["uint32"]
 	|	SFIXED16 -> INT32["sint32"]
     |   UINT16 -> UINT32["uint32"]
     |   ANGLE -> FLOAT["float"]
+    |   SOLIDANGLE -> FLOAT["float"]
     |   TIME -> FIXED64["fixed64"]
     |   DURATION -> SFIXED64["sfixed64"]
-    ;
+    ; 
 
 advanced_array_type:	   UUID -> BYTES["bytes"]
     |   SHA256 -> BYTES["bytes"]
-    ;
+    ; 
 
 literal_value
 	:	HEX_LITERAL
@@ -465,7 +466,7 @@ TO : 'to';
 // Enum elements
 ENUM	:	'enum';
 
-flags :
+flags : 
      FLAGS8
      {
         $flags_def::flagBits=8;
@@ -540,6 +541,7 @@ STRING   :   'string';
 UUID : 'uuid';
 SHA256 : 'sha256';
 ANGLE : 'angle';
+SOLIDANGLE : 'solidangle';
 TIME : 'time';
 DURATION : 'duration';
 NORMAL : 'normal';
