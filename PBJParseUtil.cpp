@@ -233,38 +233,15 @@ pANTLR3_UINT8 replaceImportedMessageType(pPBJParser ctx, pANTLR3_COMMON_TOKEN na
     pANTLR3_STRING real_name = name->getText(name);
 
     std::string fname((char*)real_name->chars, real_name->len);
-    std::string subs_text("_prefix_");
-    unsigned int idx = fname.find(subs_text);
+    unsigned int idx = fname.rfind('.');
     if (idx != std::string::npos)
-        fname.replace(idx, subs_text.size(), prefix);
+        fname.insert(idx+1, std::string(prefix) + ".");
 
     char* new_chars = (char*)malloc(fname.size() + 1);
     memcpy(new_chars, fname.c_str(), fname.size());
     new_chars[fname.size()] = '\0';
 
     return (pANTLR3_UINT8)new_chars;
-}
-
-/** And this version is used to just get rid of the _prefix_ part because in the
- * actual pbj.hpp file, we don't want it (since its not used in the public
- * interface).
- */
-pANTLR3_STRING filterImportedMessageType(pANTLR3_STRING name) {
-    std::string fname((char*)name->chars, name->len);
-    std::string subs_text("_prefix_");
-    int idx = fname.find(subs_text);
-    if (idx != std::string::npos)
-        fname.erase(idx, subs_text.size());
-
-    // Get rid of a ".." leftover from removing _prefix_ from between them
-    std::string dotdot_text("..");
-    idx = fname.find(dotdot_text);
-    if (idx != std::string::npos)
-        fname.replace(idx, dotdot_text.size(), ".");
-
-    pANTLR3_STRING s = name->factory->newRaw(name->factory);
-    s->append(s, fname.c_str());
-    return s;
 }
 
 /** Gets the interface style name from a message type, e.g. gets

@@ -56,7 +56,6 @@ typedef struct CsStreams CsStreamOutput;
     pANTLR3_STRING stripPBJExtension(pANTLR3_STRING name);
 
     pANTLR3_UINT8 replaceImportedMessageType(pPBJParser ctx, pANTLR3_COMMON_TOKEN name);
-    pANTLR3_STRING filterImportedMessageType(pANTLR3_STRING name);
 
 void initSymbolTable(SCOPE_TYPE(Symbols) symtab, pANTLR3_STRING msgId, int isExtension);
 void initNameSpace(pPBJParser ctx, SCOPE_TYPE(NameSpace) symtab);

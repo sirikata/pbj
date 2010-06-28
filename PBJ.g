@@ -368,7 +368,7 @@ field_type
     {
        $field::isNumericType=(SCOPE_TOP(Symbols)->flag_sizes->get(SCOPE_TOP(Symbols)->flag_sizes,$QUALIFIEDIDENTIFIER.text->chars)!=NULL||
                                 SCOPE_TOP(Symbols)->enum_sizes->get(SCOPE_TOP(Symbols)->enum_sizes,$QUALIFIEDIDENTIFIER.text->chars)!=NULL);
-       $field::fieldType=filterImportedMessageType($QUALIFIEDIDENTIFIER.text);
+       $field::fieldType=$QUALIFIEDIDENTIFIER.text;
     }
     ;
 multiplicitive_type
