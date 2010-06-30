@@ -52,21 +52,27 @@ public:
     }
 };
 
-template <class HasAllPBJFieldsAble> class Message {
+class MessageBase {
+protected:
     ::google::protobuf::Message * _mMessage;
 
-protected:
-    Message(::google::protobuf::Message *msg){
+    MessageBase(::google::protobuf::Message *msg){
         _mMessage=msg;
     }
+    virtual ~MessageBase() {}
+
     void setMessageRepresentation(::google::protobuf::Message * msg) {
         _mMessage=msg;
     }
 public:
-    void CopyFrom(const Message&from) {
+    virtual bool InputOK() const = 0;
+    virtual bool OutputOK() const = 0;
+    virtual bool IsInitialized() const = 0;
+
+    void CopyFrom(const MessageBase&from) {
         _mMessage->CopyFrom(*from._mMessage);
     }
-    void MergeFrom(const Message&from) {
+    void MergeFrom(const MessageBase&from) {
         _mMessage->MergeFrom(*from._mMessage);
     }
     void Clear() {
@@ -74,16 +80,6 @@ public:
     }
     void DiscardUnknownFields() {
         _mMessage->DiscardUnknownFields();
-    }
-    bool InputOK() const{
-        return static_cast<const HasAllPBJFieldsAble*>(this)->HasAllPBJFieldsAble::_HasAllPBJFields();
-    }
-    bool OutputOK() const{
-        assert(static_cast<const HasAllPBJFieldsAble*>(this)->HasAllPBJFieldsAble::_HasAllPBJFields());
-        return true;
-    }
-    bool IsInitialized() const {
-        return _mMessage->IsInitialized()&&static_cast<const HasAllPBJFieldsAble*>(this)->HasAllPBJFieldsAble::_HasAllPBJFields();
     }
     bool ParseFromCodedStream(::google::protobuf::io::CodedInputStream* input){
         return _mMessage->ParseFromCodedStream(input)&&InputOK();
@@ -251,7 +247,8 @@ public:
   // not have changed since the last call to ByteSize(); if it has, the results
   // are undefined.
     bool SerializeWithCachedSizes(::google::protobuf::io::CodedOutputStream* output) const{
-        return _mMessage->SerializeWithCachedSizes(output)&&OutputOK();
+        _mMessage->SerializeWithCachedSizes(output);
+        return OutputOK();
     }
 
   // Returns the result of the last call to ByteSize().  An embedded message's
@@ -269,6 +266,25 @@ public:
         return _mMessage->GetCachedSize();
     }
 
+};
+
+template <class HasAllPBJFieldsAble>
+class Message : public MessageBase {
+protected:
+    Message(::google::protobuf::Message *msg)
+     :MessageBase(msg)
+    {}
+public:
+    virtual bool InputOK() const{
+        return static_cast<const HasAllPBJFieldsAble*>(this)->HasAllPBJFieldsAble::_HasAllPBJFields();
+    }
+    virtual bool OutputOK() const{
+        assert(static_cast<const HasAllPBJFieldsAble*>(this)->HasAllPBJFieldsAble::_HasAllPBJFields());
+        return true;
+    }
+    virtual bool IsInitialized() const {
+        return _mMessage->IsInitialized()&&static_cast<const HasAllPBJFieldsAble*>(this)->HasAllPBJFieldsAble::_HasAllPBJFields();
+    }
 };
 
 template <class T> class RefClass : public T{
