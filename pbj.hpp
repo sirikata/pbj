@@ -487,7 +487,7 @@ template <> class _PBJConstruct<PBJ::BoundingBox3f3f> {
 public:
     typedef PBJ::Array6f ArrayType;
     PBJ::Array6f operator()(const PBJ::BoundingBox3f3f&ct) {
-        float data[6]={ct.center().x,ct.center().y,ct.center().z,ct.across().x,ct.across().y,ct.across().z};
+        float data[6]={ct.min().x,ct.min().y,ct.min().z,ct.across().x,ct.across().y,ct.across().z};
         return PBJ::Array6f::construct(data);
     }
 };
@@ -496,7 +496,7 @@ template <> class _PBJConstruct<PBJ::BoundingBox3d3f> {
 public:
     typedef PBJ::Array6d ArrayType;
     PBJ::Array6d operator()(const PBJ::BoundingBox3d3f&ct) {
-        double data[6]={ct.center().x,ct.center().y,ct.center().z,ct.across().x,ct.across().y,ct.across().z};
+        double data[6]={ct.min().x,ct.min().y,ct.min().z,ct.across().x,ct.across().y,ct.across().z};
         return PBJ::Array6d::construct(data);
     }
 };
