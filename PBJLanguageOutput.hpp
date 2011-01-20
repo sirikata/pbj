@@ -1,5 +1,7 @@
 extern "C" struct LanguageOutputStruct {
     std::ostream* cpp;
+    std::ostream* hpp;
+    std::ostream* npp;
     std::ostream* cs;
 };
 

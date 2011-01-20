@@ -26,6 +26,8 @@ int main(int argc, char *argv[])
     }
     char * csOut=NULL;
     char * cppOut=NULL;
+    char* hppOut = NULL;
+    char* nppOut = NULL;
     char * cppInclude=NULL;
     int argindex;
     const char *outputInternalNamespace="_PBJ_Internal";
@@ -36,6 +38,14 @@ int main(int argc, char *argv[])
         if (strncmp(argv[argindex],"--cpp=",6)==0) {
             cppOut=argv[argindex]+6;
         }
+        if (strncmp(argv[argindex],"--hpp=",6)==0) {
+            hppOut=argv[argindex]+6;
+        }
+        if (strncmp(argv[argindex],"--npp=",6)==0) {
+            nppOut=argv[argindex]+6;
+        }
+
+
         if (strncmp(argv[argindex],"--cs=",5)==0) {
             csOut=argv[argindex]+5;
         }
@@ -95,13 +105,28 @@ int main(int argc, char *argv[])
     }
 
     SCOPE_TOP(NameSpace)->output=(struct LanguageOutputStruct*)malloc(sizeof(struct LanguageOutputStruct));
-    std::fstream cppOutStream,csOutStream;
+    std::fstream cppOutStream,csOutStream,hppOutStream,nppOutStream;
     SCOPE_TOP(NameSpace)->output->cs=&std::cerr;
     SCOPE_TOP(NameSpace)->output->cpp=&std::cout;//could open something dependent on filename
+    SCOPE_TOP(NameSpace)->output->hpp=&std::cout;
+
     if (cppOut) {
         cppOutStream.open(cppOut,std::ios_base::out);
         SCOPE_TOP(NameSpace)->output->cpp=&cppOutStream;
     }
+
+    if(hppOut)
+    {
+      hppOutStream.open(hppOut, std::ios_base::out);
+      SCOPE_TOP(NameSpace)->output->hpp=&hppOutStream;
+    }
+
+    if(nppOut)
+    {
+      nppOutStream.open(nppOut, std::ios_base::out);
+      SCOPE_TOP(NameSpace)->output->npp=&nppOutStream;
+    }
+
 
     if (csOut) {
         csOutStream.open(csOut,std::ios_base::out);

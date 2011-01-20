@@ -77,6 +77,12 @@ void  freeNameSpace(SCOPE_TYPE(NameSpace) symtab) {
     if (symtab->output->cpp) {
         *symtab->output->cpp<<"#endif\n";
     }
+    
+    if (symtab->output->hpp) {
+        *symtab->output->hpp<<"#endif\n";
+    }
+
+
     symtab->imports->free(symtab->imports);
     //delete symtab->output->cpp;
 }
@@ -106,6 +112,23 @@ void  initNameSpace(pPBJParser ctx, SCOPE_TYPE(NameSpace) symtab) {
             *symtab->output->cpp<<"#include \"pbj.hpp\"\n";
             *symtab->output->cpp<<"#include \""<<symtab->filename->chars<<".pb.h\"\n";
         }
+        
+        if(symtab->output->hpp)
+        {
+          *symtab->output->hpp<<"#ifndef "<<defineable(symtab->internalNamespace->chars)<<(symtab->externalNamespace->len?'_'+defineable(symtab->externalNamespace->chars)+'_':"_")<<defineable(symtab->filename->chars)<<'\n';
+          *symtab->output->hpp<<"#define "<<defineable(symtab->internalNamespace->chars)<<(symtab->externalNamespace->len?'_'+defineable(symtab->externalNamespace->chars)+'_':"_")<<defineable(symtab->filename->chars)<<'\n';
+
+          *symtab->output->hpp<<"#include \"pbj.hpp\"\n";
+          *symtab->output->hpp<<"#include \""<<symtab->filename->chars<<".pb.h\"\n";
+
+        }
+
+        if(symtab->output->npp)
+        {
+          *symtab->output->npp<<"#include \""<<symtab->filename->chars<<".pbj.h\"\n";
+        }
+
+
         if (symtab->filename->len>6) {
             symtab->filename->chars[symtab->filename->len-6]=lst;
         }
@@ -291,6 +314,8 @@ std::string insertInternalNamespace(std::string cppType, std::string ns) {
 
 #define CPPFP *SCOPE_TOP(NameSpace)->output->cpp
 #define CSFP *SCOPE_TOP(NameSpace)->output->cs
+#define HPPFP *SCOPE_TOP(NameSpace)->output->hpp
+#define NPPFP *SCOPE_TOP(NameSpace)->output->npp
 #define CSTYPE *SCOPE_TOP(Symbols)->cs_streams->csType
 #define CSBUILD *SCOPE_TOP(Symbols)->cs_streams->csBuild
 #define CSMEM *SCOPE_TOP(Symbols)->cs_streams->csMembers
@@ -412,6 +437,9 @@ static void openNamespace(pPBJParser ctx) {
         do {
             if (CPPFP)
                 CPPFP<<"namespace "<<substr->chars<<" {\n";
+            if(HPPFP)
+                HPPFP<<"namespace "<<substr->chars<<" {\n";
+                
             if (CSFP)
                 CSFP<<substr->chars;
 
@@ -452,6 +480,16 @@ static void closeNamespace(pPBJParser ctx) {
                 }
             }
         }
+        if (HPPFP&&stringSize) {
+            HPPFP<<"}\n";
+            for (i=0;i<stringSize;++i) {
+                if (SCOPE_TOP(NameSpace)->package->chars[i]=='.') {
+                    HPPFP<<"}\n";
+                }
+            }
+        }
+
+        
     }
 }
 pANTLR3_STRING defaultValuePreprocess(pPBJParser ctx, pANTLR3_STRING type, pANTLR3_STRING value){
@@ -515,6 +553,132 @@ void defineMessage(pPBJParser ctx, pANTLR3_STRING id){
     SCOPE_TOP(Symbols)->message=stringDup(id);
     bool subMessage=isSubMessage(ctx);
     std::string iface = interfaceName((char*)id->chars);
+
+    // Adding code for forward declaration problem
+    if(HPPFP)
+    {
+        sendTabs(ctx,HPPFP,1)<<"class "<<iface<<" : public PBJ::Message< "<<iface<<" > {\n";
+        sendTabs(ctx,HPPFP,1)<<"protected:\n";
+
+        sendTabs(ctx,HPPFP,2)<<""<<SCOPE_TOP(NameSpace)->internalNamespace->chars<<"";
+        sendCppNs(ctx,HPPFP)<<"::"<<id->chars<<" *super;\n";
+        
+        sendTabs(ctx,HPPFP,1)<<"public:\n";
+        
+        sendTabs(ctx, HPPFP,2)<<""<<SCOPE_TOP(NameSpace)->internalNamespace->chars<<"";
+        sendCppNs(ctx,HPPFP)<<"::"<<id->chars<<"* _PBJSuper();\n";
+        
+        sendTabs(ctx,HPPFP,2)<<"const "<<SCOPE_TOP(NameSpace)->internalNamespace->chars<<"";
+        sendCppNs(ctx,HPPFP)<<"::"<<id->chars<<"* _PBJSuper()const;\n";
+        
+        sendTabs(ctx,HPPFP,2)<<"typedef "<<SCOPE_TOP(NameSpace)->internalNamespace->chars<<"";
+        sendCppNs(ctx,HPPFP)<<"::"<<id->chars<<" _PBJ_SubType;\n";
+        
+        sendTabs(ctx,HPPFP,2)<<""<<iface<<"("<<SCOPE_TOP(NameSpace)->internalNamespace->chars<<"";
+        sendCppNs(ctx,HPPFP)<<"::"<<id->chars<<" &reference);\n";
+
+        sendTabs(ctx,HPPFP,2)<<"template <class T> "<<iface<<"(const PBJ::RefClass<T> &other);\n";
+
+        sendTabs(ctx,HPPFP,2)<<"template <class T> "<<iface<<"& operator=(const PBJ::RefClass<T> &other);\n";
+
+        sendTabs(ctx,HPPFP,2)<<""<<iface<<"("<<iface<<" &reference);\n"; 
+
+        sendTabs(ctx,HPPFP,2)<<""<<iface<<"& operator=("<<iface<<" &reference);\n";
+
+        sendTabs(ctx,HPPFP,2)<<"inline static const "<<iface<<"& default_instance(); \n";
+
+        sendTabs(ctx,HPPFP,2)<<"static const ::google::protobuf::Descriptor* descriptor();\n";
+
+        sendTabs(ctx,HPPFP,2)<<"inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const;\n";
+
+        sendTabs(ctx,HPPFP,2)<<"inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields();\n";
+
+
+        sendTabs(ctx,HPPFP,2)<<"const ::google::protobuf::Descriptor* GetDescriptor() const ;\n";
+
+        sendTabs(ctx,HPPFP,2)<<"const ::google::protobuf::Reflection* GetReflection() const ;\n";
+        sendTabs(ctx,HPPFP,2)<<"int GetCachedSize()const; \n";
+        
+        sendTabs(ctx, HPPFP,1)<<"};\n";
+
+        
+    }
+
+    if(CPPFP)
+    {
+        
+
+        CPPFP<<SCOPE_TOP(NameSpace)->internalNamespace->chars<<"";
+        sendCppNs(ctx,CPPFP)<<"::"<<id->chars<<"* "<< iface<<"::_PBJSuper(){ return super; }\n";
+
+
+        CPPFP<<"const "<<SCOPE_TOP(NameSpace)->internalNamespace->chars<<"";
+        sendCppNs(ctx,CPPFP)<<"::"<<id->chars<<"* "<<iface<<"::_PBJSuper()const{ return super; }\n";
+        //sendTabs(ctx,2)<<"typedef "<<SCOPE_TOP(NameSpace)->internalNamespace->chars<<"";
+        //sendCppNs(ctx,CPPFP)<<"::"<<id->chars<<" _PBJ_SubType;\n";
+        
+        CPPFP<<""<<iface<<"::"<<iface<<"("<<SCOPE_TOP(NameSpace)->internalNamespace->chars<<"";
+        sendCppNs(ctx,CPPFP)<<"::"<<id->chars<<" &reference):PBJ::Message< "<<iface<<" >(&reference) {\n";
+        sendTabs(ctx,CPPFP,1)<<"super=&reference;\n";
+        CPPFP<<"}\n";
+
+        CPPFP<<"template <class T> "<<iface<<"::"<<iface<<"(const PBJ::RefClass<T> &other) : PBJ::Message<"<<iface<<">(const_cast<PBJ::RefClass<T>*>(&other)->_PBJSuper()) {\n";
+        sendTabs(ctx,CPPFP,1)<<"super=const_cast<PBJ::RefClass<T>*>(&other)->_PBJSuper();\n";
+        CPPFP<<"}\n";
+
+        CPPFP<<"template <class T> "<<iface<<"& "<<iface<<"::operator=(const PBJ::RefClass<T> &other){\n";
+        sendTabs(ctx,CPPFP,1)<<"setMessageRepresentation(const_cast<PBJ::RefClass<T>*>(&other)->_PBJSuper());\n";
+        sendTabs(ctx,CPPFP,1)<<"super=const_cast<PBJ::RefClass<T>*>(&other)->_PBJSuper();\n";
+        sendTabs(ctx,CPPFP,1)<<"return *this;\n";
+        CPPFP<<"}\n";
+
+
+
+        CPPFP<<""<<iface<<"::"<<iface<<"("<<iface<<" &reference):PBJ::Message< "<<iface<<" >(reference._PBJSuper()) {\n";
+        sendTabs(ctx,CPPFP,1)<<"super=reference._PBJSuper();\n";
+        CPPFP<<"}\n";
+
+        CPPFP<<""<<iface<<"& "<<iface<<"::operator=("<<iface<<" &reference){\n";
+        sendTabs(ctx,CPPFP,1)<<"setMessageRepresentation(reference._PBJSuper());\n";
+        sendTabs(ctx,CPPFP,1)<<"super=reference._PBJSuper();\n";
+        sendTabs(ctx,CPPFP,1)<<"return *this;\n";
+        CPPFP<<"}\n";
+
+
+        CPPFP<<"inline static const "<<iface<<"::"<<iface<<"& default_instance() {\n";
+        sendTabs(ctx,CPPFP,1)<<"static "<<SCOPE_TOP(NameSpace)->internalNamespace->chars<<"";
+        sendCppNs(ctx,CPPFP)<<"::"<<id->chars<<" def_inst="<<SCOPE_TOP(NameSpace)->internalNamespace->chars<<"";
+        sendCppNs(ctx,CPPFP)<<"::"<<id->chars<<"::default_instance();\n";
+        sendTabs(ctx,CPPFP,1)<<"static "<<iface<<" _internalStaticVar(def_inst);\n";
+        sendTabs(ctx,CPPFP,1)<<"return _internalStaticVar;\n";
+        CPPFP<<"}\n";
+
+        CPPFP<<"static const ::google::protobuf::Descriptor* "<<iface<<"::"<<"descriptor(){\n";
+        sendTabs(ctx,CPPFP,1)<<"return "<<SCOPE_TOP(NameSpace)->internalNamespace->chars<<"";
+        sendCppNs(ctx,CPPFP)<<"::"<<id->chars<<"::descriptor();\n";
+        CPPFP<<"}\n";
+
+        CPPFP<<"inline const ::google::protobuf::UnknownFieldSet& "<<iface<<"::unknown_fields() const{\n";
+        sendTabs(ctx,CPPFP,1)<<"return super->unknown_fields();\n";
+        CPPFP<<"}\n";
+
+        CPPFP<<"inline ::google::protobuf::UnknownFieldSet* "<<iface<<"::mutable_unknown_fields(){\n";
+        sendTabs(ctx,CPPFP,1)<<"return super->mutable_unknown_fields();\n";
+        CPPFP<<"}\n";
+
+
+        CPPFP<<"const ::google::protobuf::Descriptor* "<<iface<<"::GetDescriptor() const {\n";
+        sendTabs(ctx,CPPFP,1)<<"return super->GetDescriptor();\n";
+        CPPFP<<"}\n";
+
+        CPPFP<<"const ::google::protobuf::Reflection* "<<iface<<"::GetReflection() const {\n";
+        sendTabs(ctx,CPPFP,1)<<"return super->GetReflection();\n";
+        CPPFP<<"}\n";
+        CPPFP<<"int "<<iface<<"::GetCachedSize()const{ return super->GetCachedSize(); }\n";
+
+    }
+    
+
     if (CPPFP) {
 /*
         sendTabs(ctx,1)<<"class "<<id->chars;
@@ -529,6 +693,10 @@ void defineMessage(pPBJParser ctx, pANTLR3_STRING id){
         sendTabs(ctx,1)<<"};\n";
 */
 
+        
+        
+        /* This is the new one commented out.
+        
         sendTabs(ctx,1)<<"class "<<iface<<" : public PBJ::Message< "<<iface<<" > {\n";
         sendTabs(ctx,1)<<"protected:\n";
         sendTabs(ctx,2)<<""<<SCOPE_TOP(NameSpace)->internalNamespace->chars<<"";
@@ -598,6 +766,7 @@ void defineMessage(pPBJParser ctx, pANTLR3_STRING id){
         sendTabs(ctx,3)<<"return super->GetReflection();\n";
         sendTabs(ctx,2)<<"}\n";
         sendTabs(ctx,2)<<"int GetCachedSize()const{ return super->GetCachedSize(); }\n";
+        */
     }
     if (CSFP) {
         sendTabs(ctx,CSFP,1)<<"public class "<<id->chars<<" : PBJ.IMessage {\n";
@@ -1509,6 +1678,90 @@ void defineFlagValue(pPBJParser ctx, pANTLR3_STRING messageName, pANTLR3_STRING 
 void defineMessageEnd(pPBJParser ctx, pANTLR3_STRING id){
     std::string iface = interfaceName((char*)id->chars);
     pANTLR3_LIST reqAdv=SCOPE_TOP(Symbols)->required_advanced_fields;
+    if(HPPFP)
+    {
+        sendTabs(ctx,HPPFP,1)<<"bool _HasAllPBJFields() const ;\n";//types
+
+        sendTabs(ctx,HPPFP,1)<<"static bool within_reserved_field_tag_range(int field_tag) ;\n";
+        sendTabs(ctx,HPPFP,1)<<"static bool within_extension_field_tag_range(int field_tag);\n";
+        {
+
+
+            sendTabs(ctx,HPPFP,1)<<"enum {\n";
+            sendTabs(ctx,HPPFP,2)<<"num_reserved_field_tag_ranges="<<SCOPE_TOP(Symbols)->num_reserved_ranges<<",\n";
+
+            int i;
+            for (i=0;i<SCOPE_TOP(Symbols)->num_reserved_ranges;++i) {
+                sendTabs(ctx,HPPFP,2)<<"reserved_field_tag_start_"<<i<<"="<<SCOPE_TOP(Symbols)->reserved_range_start[i]<<",\n";
+                sendTabs(ctx,HPPFP,2)<<"reserved_field_tag_end_"<<i<<"="<<SCOPE_TOP(Symbols)->reserved_range_end[i]+1;
+                if (i+1!=SCOPE_TOP(Symbols)->num_reserved_ranges||i<3)
+                    HPPFP<<",\n";
+                else
+                    HPPFP<<"\n";
+            }
+            for(;i<3;++i) {
+                sendTabs(ctx,HPPFP,2)<<"reserved_field_tag_start_"<<i<<"=0,\n";
+                sendTabs(ctx,HPPFP,2)<<"reserved_field_tag_end_"<<i<<"=0,\n";
+            }
+            for(;i<4;++i) {
+                sendTabs(ctx,HPPFP,2)<<"reserved_field_tag_start_"<<i<<"=0,\n";
+                sendTabs(ctx,HPPFP,2)<<"reserved_field_tag_end_"<<i<<"=0\n";
+            }
+            sendTabs(ctx,HPPFP,1)<<"};\n";
+
+
+
+            sendTabs(ctx,HPPFP,1)<<"enum {\n";
+            sendTabs(ctx,HPPFP,2)<<"num_extension_field_tag_ranges="<<SCOPE_TOP(Symbols)->num_extension_ranges<<",\n";
+
+            for (i=0;i<SCOPE_TOP(Symbols)->num_extension_ranges;++i) {
+                sendTabs(ctx,HPPFP,2)<<"extension_field_tag_start_"<<i<<"="<<SCOPE_TOP(Symbols)->extension_range_start[i]<<",\n";
+                sendTabs(ctx,HPPFP,2)<<"extension_field_tag_end_"<<i<<"="<<SCOPE_TOP(Symbols)->extension_range_end[i]+1;
+                if (i+1!=SCOPE_TOP(Symbols)->num_extension_ranges||i<3)
+                    HPPFP<<",\n";
+                else
+                    HPPFP<<"\n";
+            }
+            for(;i<3;++i) {
+                sendTabs(ctx,HPPFP,2)<<"extension_field_tag_start_"<<i<<"=0,\n";
+                sendTabs(ctx,HPPFP,2)<<"extension_field_tag_end_"<<i<<"=0,\n";
+            }
+            for(;i<4;++i) {
+                sendTabs(ctx,HPPFP,2)<<"extension_field_tag_start_"<<i<<"=0,\n";
+                sendTabs(ctx,HPPFP,2)<<"extension_field_tag_end_"<<i<<"=0\n";
+            }
+            sendTabs(ctx,HPPFP,1)<<"};\n";
+        }
+        sendTabs(ctx,HPPFP,0)<<"};\n";
+
+        sendTabs(ctx,HPPFP,0)<<"class "<<id->chars<<" : public "<<iface<<" {\n";
+        sendTabs(ctx,HPPFP,0)<<"protected:\n";
+        sendTabs(ctx,HPPFP,1)<<""<<SCOPE_TOP(NameSpace)->internalNamespace->chars<<"";
+        sendCppNs(ctx,HPPFP)<<" superconstructed;\n";
+        sendTabs(ctx,HPPFP,0)<<"public:\n";
+        sendTabs(ctx,HPPFP,1)<<id->chars<<"();\n";
+
+        sendTabs(ctx,HPPFP,1)<<id->chars<<"(const "<<SCOPE_TOP(NameSpace)->internalNamespace->chars<<"";
+        sendCppNs(ctx,HPPFP)<<" &copy);\n";
+        
+        sendTabs(ctx,HPPFP,1)<<id->chars<<"("<<SCOPE_TOP(NameSpace)->internalNamespace->chars<<"";
+        sendCppNs(ctx,HPPFP)<<" &reference);\n";
+
+        sendTabs(ctx,HPPFP,1)<<id->chars<<"(const "<<iface<<" &copy);\n";
+//        sendTabs(ctx,3)<<"this->PBJ::Message<"<<iface<<">::setMessageRepresentation(&superconstructed);\n";
+
+        sendTabs(ctx,1)<<id->chars<<"(const "<<id->chars<<" &copy);\n";
+
+        sendTabs(ctx,1)<<id->chars<<"& operator=(const "<<iface<<" &copy);\n";
+
+        sendTabs(ctx,1)<<id->chars<<"& operator=(const "<<id->chars<<" &copy);\n";
+        sendTabs(ctx,1)<<id->chars<<"* New()const; \n";
+
+
+        sendTabs(ctx,0)<<"};\n";
+
+
+    }
     if (CPPFP) {
         sendTabs(ctx,1)<<"bool _HasAllPBJFields() const {\n";//types
         sendTabs(ctx,2)<<"return true\n";
