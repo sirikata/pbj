@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
     char * csOut=NULL;
     char * cppOut=NULL;
     char* hppOut = NULL;
-    char* nppOut = NULL;
+    char* fppOut = NULL;
     char * cppInclude=NULL;
     int argindex;
     const char *outputInternalNamespace="_PBJ_Internal";
@@ -41,8 +41,8 @@ int main(int argc, char *argv[])
         if (strncmp(argv[argindex],"--hpp=",6)==0) {
             hppOut=argv[argindex]+6;
         }
-        if (strncmp(argv[argindex],"--npp=",6)==0) {
-            nppOut=argv[argindex]+6;
+        if (strncmp(argv[argindex],"--fpp=",6)==0) {
+            fppOut=argv[argindex]+6;
         }
 
 
@@ -54,6 +54,8 @@ int main(int argc, char *argv[])
         }
         if (strncmp(argv[argindex],"--inamespace=",13)==0) {
             outputInternalNamespace=argv[argindex]+13;
+            std::string *s = new std::string("_" + std::string(outputInternalNamespace) + "_");
+            outputInternalNamespace = s->c_str();
         }
         if (strncmp(argv[argindex],"--namespace=",12)==0) {
             outputExternalNamespace=argv[argindex]+12;
@@ -98,17 +100,20 @@ int main(int argc, char *argv[])
     }
     else {
         SCOPE_TOP(NameSpace)->prefix=tstream->tstream->tokenSource->strFactory->newRaw(tstream->tstream->tokenSource->strFactory);
+        //SCOPE_TOP(NameSpace)->prefix->append8(SCOPE_TOP(NameSpace)->prefix, "_");
         SCOPE_TOP(NameSpace)->prefix->append8(SCOPE_TOP(NameSpace)->prefix,(const char*)prefix);
+        //SCOPE_TOP(NameSpace)->prefix->append8(SCOPE_TOP(NameSpace)->prefix, "_");
     }
     if (strlen(outputExternalNamespace)) {
         SCOPE_TOP(NameSpace)->externalNamespace->append8(SCOPE_TOP(NameSpace)->externalNamespace,".");
     }
 
     SCOPE_TOP(NameSpace)->output=(struct LanguageOutputStruct*)malloc(sizeof(struct LanguageOutputStruct));
-    std::fstream cppOutStream,csOutStream,hppOutStream,nppOutStream;
+    std::fstream cppOutStream,csOutStream,hppOutStream,fppOutStream;
     SCOPE_TOP(NameSpace)->output->cs=&std::cerr;
     SCOPE_TOP(NameSpace)->output->cpp=&std::cout;//could open something dependent on filename
     SCOPE_TOP(NameSpace)->output->hpp=&std::cout;
+    SCOPE_TOP(NameSpace)->output->fpp=&std::cout;
 
     if (cppOut) {
         cppOutStream.open(cppOut,std::ios_base::out);
@@ -121,10 +126,10 @@ int main(int argc, char *argv[])
       SCOPE_TOP(NameSpace)->output->hpp=&hppOutStream;
     }
 
-    if(nppOut)
+    if(fppOut)
     {
-      nppOutStream.open(nppOut, std::ios_base::out);
-      SCOPE_TOP(NameSpace)->output->npp=&nppOutStream;
+      fppOutStream.open(fppOut, std::ios_base::out);
+      SCOPE_TOP(NameSpace)->output->fpp=&fppOutStream;
     }
 
 
