@@ -33,6 +33,7 @@ int main(int argc, char *argv[])
     const char *outputInternalNamespace="_PBJ_Internal";
     const char *outputExternalNamespace="";
     const char *prefix = NULL;
+    const char* export_macro = NULL;
     for (argindex=3;argindex<argc;++argindex) {
 
         if (strncmp(argv[argindex],"--cpp=",6)==0) {
@@ -63,6 +64,10 @@ int main(int argc, char *argv[])
         if (strncmp(argv[argindex],"--prefix=",9)==0) {
             prefix=argv[argindex]+9;
         }
+        if (strncmp(argv[argindex],"--export_macro=",15)==0) {
+            export_macro=argv[argindex]+15;
+        }
+
     }
 
     input = antlr3AsciiFileStreamNew(filename);
@@ -106,6 +111,21 @@ int main(int argc, char *argv[])
     }
     if (strlen(outputExternalNamespace)) {
         SCOPE_TOP(NameSpace)->externalNamespace->append8(SCOPE_TOP(NameSpace)->externalNamespace,".");
+    }
+    if(export_macro == NULL)
+    {
+        std::cout << "herer\n";
+        SCOPE_TOP(NameSpace)->export_macro=tstream->tstream->tokenSource->strFactory->newRaw(tstream->tstream->tokenSource->strFactory);
+        SCOPE_TOP(NameSpace)->export_macro->append8(SCOPE_TOP(NameSpace)->export_macro,(const char*)" ");
+
+    
+    }
+    else
+    {
+        std::cout << "\nelse\n";
+        SCOPE_TOP(NameSpace)->export_macro=tstream->tstream->tokenSource->strFactory->newRaw(tstream->tstream->tokenSource->strFactory);
+        SCOPE_TOP(NameSpace)->export_macro->append8(SCOPE_TOP(NameSpace)->export_macro,(const char*)export_macro);
+
     }
 
     SCOPE_TOP(NameSpace)->output=(struct LanguageOutputStruct*)malloc(sizeof(struct LanguageOutputStruct));

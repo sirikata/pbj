@@ -52,6 +52,7 @@ scope NameSpace {
     pANTLR3_STRING package;
     pANTLR3_LIST imports;
     pANTLR3_STRING prefix;
+    pANTLR3_STRING export_macro;
 }
 
 scope Symbols {

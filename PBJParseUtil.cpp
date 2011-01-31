@@ -99,6 +99,7 @@ void  initNameSpace(pPBJParser ctx, SCOPE_TYPE(NameSpace) symtab) {
         symtab->internalNamespace=stringDup(lowerNamespace->internalNamespace);
         symtab->externalNamespace=stringDup(lowerNamespace->externalNamespace);
         symtab->prefix=stringDup(lowerNamespace->prefix);
+        symtab->export_macro=stringDup(lowerNamespace->export_macro);
         symtab->output=(struct LanguageOutputStruct*)malloc(sizeof(struct LanguageOutputStruct));
         memcpy(symtab->output,((SCOPE_TYPE(NameSpace) )SCOPE_INSTANCE(NameSpace,SCOPE_SIZE(NameSpace)-2))->output,sizeof(struct LanguageOutputStruct));
 
@@ -691,7 +692,7 @@ void defineMessage(pPBJParser ctx, pANTLR3_STRING id){
 
         
         FPPFP<<"class "<<iface<<";\n";
-        sendTabs(ctx,HPPFP,1)<<"class "<<iface<<" : public PBJ::Message< "<<iface<<" > {\n";
+        sendTabs(ctx,HPPFP,1)<<"class "<<SCOPE_TOP(NameSpace)->export_macro->chars<< " "<<iface<<" : public PBJ::Message< "<<iface<<" > {\n";
         sendTabs(ctx,HPPFP,1)<<"protected:\n";
 
         sendTabs(ctx,HPPFP,2)<<""<<name_space<<"::"<<id->chars<<" *super;\n";
@@ -706,9 +707,20 @@ void defineMessage(pPBJParser ctx, pANTLR3_STRING id){
         
         sendTabs(ctx,HPPFP,2)<<""<<iface<<"("<<name_space<<"::"<<id->chars<<" &reference);\n";
 
-        sendTabs(ctx,HPPFP,2)<<"template <class T> "<<iface<<"(const PBJ::RefClass<T> &other);\n";
+        //sendTabs(ctx,HPPFP,2)<<"template <class T> "<<iface<<"(const PBJ::RefClass<T> &other);\n";
 
-        sendTabs(ctx,HPPFP,2)<<"template <class T> "<<iface<<"& operator=(const PBJ::RefClass<T> &other);\n";
+        //sendTabs(ctx,HPPFP,2)<<"template <class T> "<<iface<<"& operator=(const PBJ::RefClass<T> &other);\n";
+        //templates are to be generated in the header file itself
+        sendTabs(ctx, HPPFP, 2)<<"template <class T> "<<iface<<"(const PBJ::RefClass<T> &other) : PBJ::Message<"<<iface<<">(const_cast<PBJ::RefClass<T>*>(&other)->_PBJSuper()) {\n";
+        sendTabs(ctx,HPPFP,3)<<"super=const_cast<PBJ::RefClass<T>*>(&other)->_PBJSuper();\n";
+        sendTabs(ctx, HPPFP, 2)<<"}\n";
+
+        sendTabs(ctx, HPPFP, 2)<<"template <class T> "<<iface<<"& "<<"operator=(const PBJ::RefClass<T> &other){\n";
+        sendTabs(ctx,HPPFP,3)<<"setMessageRepresentation(const_cast<PBJ::RefClass<T>*>(&other)->_PBJSuper());\n";
+        sendTabs(ctx,HPPFP,3)<<"super=const_cast<PBJ::RefClass<T>*>(&other)->_PBJSuper();\n";
+        sendTabs(ctx,HPPFP,3)<<"return *this;\n";
+        sendTabs(ctx, HPPFP, 2)<<"}\n";
+
 
         sendTabs(ctx,HPPFP,2)<<""<<iface<<"("<<iface<<" &reference);\n"; 
 
@@ -767,7 +779,7 @@ void defineMessage(pPBJParser ctx, pANTLR3_STRING id){
         CPPFP<<""<<iface<<"::"<<justName<<"("<<fullNs<<"::"<<id->chars<<" &reference):PBJ::Message< "<<iface<<" >(&reference) {\n";
         sendTabs(ctx,CPPFP,1)<<"super=&reference;\n";
         CPPFP<<"}\n";
-
+/*
         CPPFP<<"template <class T> "<<iface<<"::"<<justName<<"(const PBJ::RefClass<T> &other) : PBJ::Message<"<<iface<<">(const_cast<PBJ::RefClass<T>*>(&other)->_PBJSuper()) {\n";
         sendTabs(ctx,CPPFP,1)<<"super=const_cast<PBJ::RefClass<T>*>(&other)->_PBJSuper();\n";
         CPPFP<<"}\n";
@@ -778,7 +790,7 @@ void defineMessage(pPBJParser ctx, pANTLR3_STRING id){
         sendTabs(ctx,CPPFP,1)<<"return *this;\n";
         CPPFP<<"}\n";
 
-
+*/
 
         CPPFP<<""<<iface<<"::"<<justName<<"("<<iface<<" &reference):PBJ::Message< "<<iface<<" >(reference._PBJSuper()) {\n";
         sendTabs(ctx,CPPFP,1)<<"super=reference._PBJSuper();\n";
@@ -2036,7 +2048,7 @@ void defineMessageEnd(pPBJParser ctx, pANTLR3_STRING id){
 
         
         FPPFP<<"class "<<id->chars<<";\n";
-        sendTabs(ctx,HPPFP,0)<<"class "<<id->chars<<" : public "<<iface<<" {\n";
+        sendTabs(ctx,HPPFP,0)<<"class " <<SCOPE_TOP(NameSpace)->export_macro->chars<< " "<<id->chars<<" : public "<<iface<<" {\n";
         sendTabs(ctx,HPPFP,0)<<"protected:\n";
         sendTabs(ctx,HPPFP,1)<<""<<SCOPE_TOP(NameSpace)->internalNamespace->chars<<"::";
         sendCppNs(ctx,HPPFP)<<" superconstructed;\n";
