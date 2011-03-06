@@ -363,10 +363,9 @@ std::string insertInternalNamespace2(std::string cppType, std::string cppNs, std
     // did not find a "::" in the cppType
     if(cppNs.size() > 0)
     {
-      std::string result = ns + "::" + cppNs + "::" + cppType;
-      
-      return result;
+      return ns + "::" + cppNs + "::" + cppType;
     }
+    return ns + "::" + cppType;
   }
 
   // if there is a :: in the cppType
@@ -374,9 +373,10 @@ std::string insertInternalNamespace2(std::string cppType, std::string cppNs, std
   if(cppNs.size() > 0)
   {
     cppType.insert(idx, ("::" + ns + "::" + cppNs));
-    return cppType; 
+    return cppType;
   }
-
+  cppType.insert(idx, ("::" + ns));
+  return cppType;
 
 };
 
