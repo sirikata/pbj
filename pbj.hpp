@@ -544,22 +544,24 @@ public:
     }
 };
 
-template <> class _PBJCast<PBJ::utf8string> {
+template <> class _PBJCast<const PBJ::utf8string&> {
 public:
     const std::string& operator()(const std::string& s) {
         return s;
     }
-    const std::string operator()() {
-        return std::string();
+    const std::string& operator()() {
+        static std::string emptyval;
+        return emptyval;
     }
 };
-template <> class _PBJCast<PBJ::bytes> {
+template <> class _PBJCast<const PBJ::bytes&> {
 public:
     const std::string& operator()(const std::string& s) {
         return s;
     }
-    const std::string operator()() {
-        return std::string();
+    const std::string& operator()() {
+        static std::string emptyval;
+        return emptyval;
     }
 };
 
