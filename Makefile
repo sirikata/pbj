@@ -18,7 +18,7 @@ output.proto: pbj protocol/Test.pbj
 output.pbj.hpp: pbj output.proto protocol/Test.pbj
 	./pbj protocol/Test.pbj output.proto 1> output.pbj.hpp 2> Output.pbj.cs
 pbj : main.cpp PBJ.h PBJLexer.o PBJParser.o PBJParseUtil.o
-	g++ -std=c++98 -Wall -static -g2 -o pbj -I${ANTLR_INCLUDE} -I${ANTLR_LIB} -L${ANTLR_LIB} -I/usr/local/include -L/usr/local/lib main.cpp PBJLexer.o PBJParser.o PBJParseUtil.o -lantlr3c || g++ -o pbj -I${ANTLR_INCLUDE} -I${ANTLR_LIB} -L${ANTLR_LIB} -I/usr/local/include -L/usr/local/lib -g2 main.cpp PBJLexer.o PBJParser.o PBJParseUtil.o ${ANTLR_LIB}/libantlr3c.a || g++ -o pbj -I${ANTLR_INCLUDE} -I${ANTLR_LIB} -L${ANTLR_LIB} -I/usr/local/include -L/usr/local/lib -g2 main.cpp PBJLexer.o PBJParser.o PBJParseUtil.o -lantlr3c || g++ -std=c++98 -Wall -static -g2 -o pbj -I${ANTLR_INCLUDE} -I${ANTLR_LIB} -L${ANTLR_LIB}/libantlr3c.la -I/usr/local/include -L/usr/local/lib main.cpp PBJLexer.o PBJParser.o PBJParseUtil.o  
+	g++ -std=c++98 -Wall -static -g2 -o pbj -I${ANTLR_INCLUDE} -I${ANTLR_LIB} -L${ANTLR_LIB} -I/usr/local/include -L/usr/local/lib main.cpp PBJLexer.o PBJParser.o PBJParseUtil.o ${ANTLR_LIB}/.libs/libantlr3c.a || g++ -o pbj -I${ANTLR_INCLUDE} -I${ANTLR_LIB} -L${ANTLR_LIB} -I/usr/local/include -L/usr/local/lib -g2 main.cpp PBJLexer.o PBJParser.o PBJParseUtil.o ${ANTLR_LIB}/.libs/libantlr3c.a || g++ -o pbj -I${ANTLR_INCLUDE} -I${ANTLR_LIB} -L${ANTLR_LIB} -I/usr/local/include -L/usr/local/lib -g2 main.cpp PBJLexer.o PBJParser.o PBJParseUtil.o ${ANTLR_LIB}/.libs/libantlr3c.a || g++ -std=c++98 -Wall -static -g2 -o pbj -I${ANTLR_INCLUDE} -I${ANTLR_LIB} -L${ANTLR_LIB}/libantlr3c.la -I/usr/local/include -L/usr/local/lib main.cpp PBJLexer.o PBJParser.o PBJParseUtil.o  
 
 PBJLexer.c : PBJ.g
 	java -cp "antlr-3.1.3.jar" org.antlr.Tool PBJ.g
