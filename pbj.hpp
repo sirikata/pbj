@@ -472,14 +472,13 @@ public:
     }
 };
 
+
 template <> class _PBJConstruct<PBJ::Quaternion> {
 public:
-    typedef PBJ::Array3f ArrayType;
-    PBJ::Array3f operator()(const PBJ::Quaternion&q) {
-        PBJ::Quaternion ct=q/q.length();
-
-        float data[3]={ct.x+(ct.w<0.0f?3.0f:0.0f),ct.y,ct.z};
-        return PBJ::Array3f::construct(data);
+    typedef PBJ::Array4f ArrayType;
+    PBJ::Array4f operator()(const PBJ::Quaternion&q) {
+        float data[4]={q.x,q.y,q.z,q.w};
+        return PBJ::Array4f::construct(data);
     }
 };
 
@@ -654,22 +653,20 @@ public:
 };
 
 
+
 template <> class _PBJCast<PBJ::Quaternion> {
 public:
-    PBJ::Quaternion operator()(float x, float y,float z) {
-        if (!_PBJIsFinite(x) || !_PBJIsFinite(y) || !_PBJIsFinite(z)) {
+    PBJ::Quaternion operator()(float x, float y,float z,float w) {
+        if (!_PBJIsFinite(x) || !_PBJIsFinite(y) || !_PBJIsFinite(z) || !_PBJIsFinite(w)) {
             return operator()();
         }
-        float neg=(x>1.5f||y>1.5f||z>1.5f)?-1.0f:1.0f;
-        if (x>1.5f) x-=3.0f;
-        if (y>1.5f) y-=3.0f;
-        if (z>1.5f) z-=3.0f;
-        return PBJ::Quaternion(x,y,z,neg*sqrt(1-x*x-y*y-z*z),PBJ::Quaternion::XYZW());
+        return PBJ::Quaternion(x,y,z,w,PBJ::Quaternion::XYZW());
     }
     PBJ::Quaternion operator()() {
         return PBJ::Quaternion::identity();
     }
 };
+
 template <> class _PBJCast<PBJ::Vector2f> {
 public:
     PBJ::Vector2f operator()(float x, float y) {
