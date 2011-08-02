@@ -7,6 +7,12 @@ extern "C" {
 #include <fstream>
 #include "PBJLanguageOutput.hpp"
 
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
+
 int main(int argc, char *argv[])
 {
 
@@ -34,8 +40,11 @@ int main(int argc, char *argv[])
     const char *outputExternalNamespace="";
     const char *prefix = NULL;
     const char* export_macro = NULL;
+    bool delay = false;
     for (argindex=3;argindex<argc;++argindex) {
-
+        if (strncmp(argv[argindex],"--delay",7)==0) {
+            delay = true;
+        }
         if (strncmp(argv[argindex],"--cpp=",6)==0) {
             cppOut=argv[argindex]+6;
         }
@@ -68,6 +77,18 @@ int main(int argc, char *argv[])
             export_macro=argv[argindex]+15;
         }
 
+    }
+
+    // Kind of a weird option, but necessary due to timestamping issues. This
+    // delays creation by 1 second so that the pbj source and the output files
+    // (cs, cpp, etc) will have different timestamps so make won't try to
+    // re-make them.
+    if (delay) {
+#ifdef _WIN32
+        Sleep(1000);
+#else
+        sleep(1);
+#endif
     }
 
     input = antlr3AsciiFileStreamNew(filename);
@@ -118,7 +139,7 @@ int main(int argc, char *argv[])
         SCOPE_TOP(NameSpace)->export_macro=tstream->tstream->tokenSource->strFactory->newRaw(tstream->tstream->tokenSource->strFactory);
         SCOPE_TOP(NameSpace)->export_macro->append8(SCOPE_TOP(NameSpace)->export_macro,(const char*)" ");
 
-    
+
     }
     else
     {
