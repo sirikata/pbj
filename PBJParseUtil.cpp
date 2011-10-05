@@ -77,16 +77,16 @@ void  freeNameSpace(SCOPE_TYPE(NameSpace) symtab) {
     if (symtab->output->cpp) {
         //*symtab->output->cpp<<"#endif\n";
     }
-    
+
     if (symtab->output->hpp) {
         *symtab->output->hpp<<"#endif\n";
     }
-   
+
    if (symtab->output->fpp) {
         *symtab->output->fpp<<"#endif\n";
     }
 
-    
+
     symtab->imports->free(symtab->imports);
     //delete symtab->output->cpp;
 }
@@ -121,7 +121,7 @@ void  initNameSpace(pPBJParser ctx, SCOPE_TYPE(NameSpace) symtab) {
             //*symtab->output->cpp<<"#include \""<<symtab->filename->chars<<".pb.h\"\n";
             *symtab->output->cpp<<"#include \""<<symtab->filename->chars<<".pbj.hpp\"\n";
         }
-        
+
         if(symtab->output->fpp)
         {
           *symtab->output->fpp<<"#ifndef "<<defineable(symtab->internalNamespace->chars)<<(symtab->externalNamespace->len?'_'+defineable(symtab->externalNamespace->chars)+'_':"_")<<defineable(symtab->filename->chars)<<"_Fwd"<<'\n';
@@ -137,10 +137,10 @@ void  initNameSpace(pPBJParser ctx, SCOPE_TYPE(NameSpace) symtab) {
           *symtab->output->hpp<<"#include \"pbj.hpp\"\n";
           *symtab->output->hpp<<"#include \""<<symtab->filename->chars<<".pb.h\"\n";
           *symtab->output->hpp<<"#include \""<<symtab->filename->chars<<".pbj.fwd.hpp\"\n";
-          
+
         }
 
-        
+
 
         if (symtab->filename->len>6) {
             symtab->filename->chars[symtab->filename->len-6]=lst;
@@ -208,7 +208,7 @@ void  definePackage(pPBJParser ctx, pANTLR3_STRING id) {
 */
 
 
- 
+
 }
 
 pANTLR3_STRING  stringDup(pANTLR3_STRING s) {
@@ -277,7 +277,7 @@ pANTLR3_STRING stripPBJExtension(pANTLR3_STRING name) {
 pANTLR3_UINT8 replaceImportedMessageType(pPBJParser ctx, pANTLR3_COMMON_TOKEN name) {
     //char* prefix = SCOPE_TOP(NameSpace)->prefix ? (char*)SCOPE_TOP(NameSpace)->prefix->chars : NULL;
     char* prefix = SCOPE_TOP(NameSpace)->internalNamespace ? (char*)SCOPE_TOP(NameSpace)->internalNamespace->chars : NULL;
-    
+
     pANTLR3_STRING real_name = name->getText(name);
 
     std::string fname((char*)real_name->chars, real_name->len);
@@ -298,7 +298,7 @@ pANTLR3_UINT8 replaceImportedMessageType(pPBJParser ctx, pANTLR3_COMMON_TOKEN na
  */
 std::string interfaceName(std::string orig) {
     int offset = 1;
-    int idx = orig.rfind('.');
+    std::size_t idx = orig.rfind('.');
     if (idx == std::string::npos) {
         offset = 2;
         idx = orig.rfind("::");
@@ -312,7 +312,7 @@ std::string interfaceName(std::string orig) {
 
 std::string interfaceName2(std::string orig) {
     int offset = 1;
-    int idx = orig.rfind('.');
+    std::size_t idx = orig.rfind('.');
     if (idx == std::string::npos) {
         offset = 2;
         idx = orig.rfind("::");
@@ -328,7 +328,7 @@ std::string interfaceName2(std::string orig) {
  */
 std::string qualifiedCPP(std::string orig) {
     while(true) {
-        int idx = orig.find('.');
+        std::size_t idx = orig.find('.');
         if (idx != std::string::npos)
             orig.replace(idx, 1, "::");
         else
@@ -344,7 +344,7 @@ std::string qualifiedCPP(std::string orig) {
 
 
 std::string insertInternalNamespace(std::string cppType, std::string ns) {
-    int idx = cppType.rfind("::");
+    std::size_t idx = cppType.rfind("::");
     if (idx == std::string::npos)
         return ns + "::" + cppType;
 
@@ -357,7 +357,7 @@ std::string insertInternalNamespace(std::string cppType, std::string ns) {
 
 std::string insertInternalNamespace2(std::string cppType, std::string cppNs, std::string ns) {
 
-  int idx = cppType.rfind("::");
+    std::size_t idx = cppType.rfind("::");
   if(idx == std::string::npos)
   {
     // did not find a "::" in the cppType
@@ -513,7 +513,7 @@ static void openNamespace(pPBJParser ctx) {
             if(FPPFP)
                 FPPFP<<"namespace "<<substr->chars<<" {\n";
 
-                
+
             if (CSFP)
                 CSFP<<substr->chars;
 
@@ -683,28 +683,28 @@ void defineMessage(pPBJParser ctx, pANTLR3_STRING id){
         std::string cppNs = ss.str();
         if(cppNs.size() == 0)
         {
-          
+
         }
         else
         {
           name_space +=  ("::" + cppNs );
         }
 
-        
+
         FPPFP<<"class "<<iface<<";\n";
         sendTabs(ctx,HPPFP,1)<<"class "<<SCOPE_TOP(NameSpace)->export_macro->chars<< " "<<iface<<" : public PBJ::Message< "<<iface<<" > {\n";
         sendTabs(ctx,HPPFP,1)<<"protected:\n";
 
         sendTabs(ctx,HPPFP,2)<<""<<name_space<<"::"<<id->chars<<" *super;\n";
-        
+
         sendTabs(ctx,HPPFP,1)<<"public:\n";
-        
+
         sendTabs(ctx, HPPFP,2)<<""<<name_space<<"::"<<id->chars<<"* _PBJSuper();\n";
-        
+
         sendTabs(ctx,HPPFP,2)<<"const "<<name_space<<"::"<<id->chars<<"* _PBJSuper()const;\n";
-        
+
         sendTabs(ctx,HPPFP,2)<<"typedef "<<name_space<<"::"<<id->chars<<" _PBJ_SubType;\n";
-        
+
         sendTabs(ctx,HPPFP,2)<<""<<iface<<"("<<name_space<<"::"<<id->chars<<" &reference);\n";
 
         //sendTabs(ctx,HPPFP,2)<<"template <class T> "<<iface<<"(const PBJ::RefClass<T> &other);\n";
@@ -722,7 +722,7 @@ void defineMessage(pPBJParser ctx, pANTLR3_STRING id){
         sendTabs(ctx, HPPFP, 2)<<"}\n";
 
 
-        sendTabs(ctx,HPPFP,2)<<""<<iface<<"("<<iface<<" &reference);\n"; 
+        sendTabs(ctx,HPPFP,2)<<""<<iface<<"("<<iface<<" &reference);\n";
 
         sendTabs(ctx,HPPFP,2)<<""<<iface<<"& operator=("<<iface<<" &reference);\n";
 
@@ -739,15 +739,15 @@ void defineMessage(pPBJParser ctx, pANTLR3_STRING id){
 
         sendTabs(ctx,HPPFP,2)<<"const ::google::protobuf::Reflection* GetReflection() const ;\n";
         sendTabs(ctx,HPPFP,2)<<"int GetCachedSize()const; \n";
-        
 
-        
+
+
     }
 
     if(CPPFP)
     {
         std::string justName=iface;
-        
+
         if(subMessage){
           std::stringstream s;
           sendCppNs2(ctx, s);
@@ -772,10 +772,10 @@ void defineMessage(pPBJParser ctx, pANTLR3_STRING id){
         //sendCppNs(ctx,CPPFP)<<"::"<<id->chars<<"* "<<iface<<"::_PBJSuper()const{ return super; }\n";
         //sendTabs(ctx,2)<<"typedef "<<SCOPE_TOP(NameSpace)->internalNamespace->chars<<"";
         //sendCppNs(ctx,CPPFP)<<"::"<<id->chars<<" _PBJ_SubType;\n";
-        
+
         //CPPFP<<""<<iface<<"::"<<justName<<"("<<SCOPE_TOP(NameSpace)->internalNamespace->chars<<"";
         //sendCppNs(ctx,CPPFP)<<"::"<<id->chars<<" &reference):PBJ::Message< "<<iface<<" >(&reference) {\n";
-        
+
         CPPFP<<""<<iface<<"::"<<justName<<"("<<fullNs<<"::"<<id->chars<<" &reference):PBJ::Message< "<<iface<<" >(&reference) {\n";
         sendTabs(ctx,CPPFP,1)<<"super=&reference;\n";
         CPPFP<<"}\n";
@@ -817,9 +817,9 @@ void defineMessage(pPBJParser ctx, pANTLR3_STRING id){
         CPPFP<<" const ::google::protobuf::Descriptor* "<<iface<<"::"<<"descriptor(){\n";
         //sendTabs(ctx,CPPFP,1)<<"return "<<SCOPE_TOP(NameSpace)->internalNamespace->chars<<"";
         //sendCppNs(ctx,CPPFP)<<"::"<<id->chars<<"::descriptor();\n";
-        
+
         sendTabs(ctx,CPPFP,1)<<"return "<<fullNs<<"::"<<id->chars<<"::descriptor();\n";
-        
+
         CPPFP<<"}\n";
 
         CPPFP<<"const ::google::protobuf::UnknownFieldSet& "<<iface<<"::unknown_fields() const{\n";
@@ -841,7 +841,7 @@ void defineMessage(pPBJParser ctx, pANTLR3_STRING id){
         CPPFP<<"int "<<iface<<"::GetCachedSize()const{ return super->GetCachedSize(); }\n";
 
     }
-    
+
 
     if (CPPFP) {
 /*
@@ -857,10 +857,10 @@ void defineMessage(pPBJParser ctx, pANTLR3_STRING id){
         sendTabs(ctx,1)<<"};\n";
 */
 
-        
-        
+
+
         /* This is the new one commented out.
-        
+
         sendTabs(ctx,1)<<"class "<<iface<<" : public PBJ::Message< "<<iface<<" > {\n";
         sendTabs(ctx,1)<<"protected:\n";
         sendTabs(ctx,2)<<""<<SCOPE_TOP(NameSpace)->internalNamespace->chars<<"";
@@ -1413,7 +1413,7 @@ void defineField(pPBJParser ctx, pANTLR3_STRING type, pANTLR3_STRING name, pANTL
     int isSubMessage=((SCOPE_TOP(Symbols)->types->get(SCOPE_TOP(Symbols)->types,type->chars)!=NULL)&&!isEnum)&&!isFlag;
     int isRepeated=!notRepeated;
     std::stringstream csShared;
- 
+
     std::stringstream ss;
     sendCppNs(ctx, ss);
     std::string className = interfaceName(ss.str());
@@ -1443,7 +1443,7 @@ void defineField(pPBJParser ctx, pANTLR3_STRING type, pANTLR3_STRING name, pANTL
     }
     if (isMultiplicitiveAdvancedType) {
         int numItemsPerElement=getNumItemsPerElement(ctx,type);
-        
+
         if(HPPFP && CPPFP) {
             int i;
             if (isRepeated) {
@@ -1452,10 +1452,10 @@ void defineField(pPBJParser ctx, pANTLR3_STRING type, pANTLR3_STRING name, pANTL
                 sendTabs(ctx,CPPFP,1)<<"int "<<className<<"::"<<name->chars<<"_size() const {return super->"<<name->chars<<"_size()/"<<numItemsPerElement<<";}\n";
 
                 sendTabs(ctx,csShared,1)<<"public bool Has"<<uname->chars<<"(int index) { return true; }\n";
-                sendTabs(ctx,HPPFP,1)<<"bool has_"<<name->chars<<"(int index) const;\n"; 
+                sendTabs(ctx,HPPFP,1)<<"bool has_"<<name->chars<<"(int index) const;\n";
                 sendTabs(ctx,CPPFP,1)<<"bool "<<className<<"::has_"<<name->chars<<"(int index) const {assert(index<"<<name->chars<<"_size()&&index>=0);return true;}\n";
             }else {
-                sendTabs(ctx,HPPFP,1)<<"bool has_"<<name->chars<<"() const;\n"; 
+                sendTabs(ctx,HPPFP,1)<<"bool has_"<<name->chars<<"() const;\n";
                 sendTabs(ctx,CPPFP,1)<<"bool "<<className<<"::has_"<<name->chars<<"() const {return super->"<<name->chars<<"_size()>="<<numItemsPerElement<<";}\n";
                 sendTabs(ctx,csShared,1)<<"public bool Has"<<uname->chars<<"{ get {return super."<<uname->chars<<"Count>="<<numItemsPerElement<<";} }\n";
             }
@@ -1538,14 +1538,14 @@ void defineField(pPBJParser ctx, pANTLR3_STRING type, pANTLR3_STRING name, pANTL
                 sendTabs(ctx,CPPFP,1)<<"}\n";
             }
         }
-        
+
 
     }else {
         if (isRepeated) {
-           
+
             if (HPPFP && CPPFP) {
 
-                sendTabs(ctx,HPPFP,1)<<"int "<<name->chars<<"_size() const;\n"; 
+                sendTabs(ctx,HPPFP,1)<<"int "<<name->chars<<"_size() const;\n";
                 sendTabs(ctx,CPPFP,1)<<"int "<<className<<"::"<<name->chars<<"_size() const {return super->"<<name->chars<<"_size();}\n";
                 sendTabs(ctx,csShared,1)<<"public int "<<uname->chars<<"Count { get { return super."<<uname->chars<<"Count;} }\n";
                 bool isRawByteArray=(strcmp((char*)type->chars,"bytes")==0||strcmp((char*)type->chars,"string")==0);
@@ -1586,7 +1586,7 @@ void defineField(pPBJParser ctx, pANTLR3_STRING type, pANTLR3_STRING name, pANTL
 
                     printFlags(CPPFP,SCOPE_TOP(Symbols)->flag_all_on,type)<<");\n";
                     sendTabs(ctx,CPPFP,1)<<"}\n";
-                  
+
 
                     sendTabs(ctx,csShared,1)<<"public bool Has"<<uname->chars<<"(int index) const {\n";
                     sendTabs(ctx,csShared,2)<<"return PBJ._PBJ.ValidateFlags(super.Get"<<uname->chars<<"(index),";
@@ -1595,21 +1595,21 @@ void defineField(pPBJParser ctx, pANTLR3_STRING type, pANTLR3_STRING name, pANTL
                     sendTabs(ctx,csShared,1)<<"}\n";
 
                 }else {
-                    sendTabs(ctx,HPPFP,1)<<"bool has_"<<name->chars<<"(int index) const;\n"; 
+                    sendTabs(ctx,HPPFP,1)<<"bool has_"<<name->chars<<"(int index) const;\n";
                     sendTabs(ctx,CPPFP,1)<<"bool "<<className<<"::has_"<<name->chars<<"(int index) const {assert(index>=0&&index<"<<name->chars<<"_size()); return _PBJValidate< "<<pbjType<<">()(super->"<<name->chars<<"(index));}\n";
                     sendTabs(ctx,csShared,1)<<"public bool Has"<<uname->chars<<"(int index) {return PBJ._PBJ.Validate"<<utype->chars<<"(super.Get"<<uname->chars<<"(index));}\n";
                 }
                 sendTabs(ctx,csShared,1)<<"public "<<csType<<" "<<uname->chars<<"(int index) {\n";
 
                 sendTabs(ctx,HPPFP,1)<<""<<(isMessageType?"":"")<<(isRawByteArray?"const std::string&":cppType)<<" "<<name->chars<<"(int index) const ;\n";
-                
+
                 if(isSubMessage)
                 {
                   sendTabs(ctx,CPPFP,1)<<""<<(isMessageType?"":"")<<(isRawByteArray?"const std::string&":className + "::" + cppType)<<" "<<className<<"::"<<name->chars<<"(int index) const {\n";
                 }
                 else
                 {
-                
+
                   sendTabs(ctx,CPPFP,1)<<""<<(isMessageType?"":"")<<(isRawByteArray?"const std::string&":cppType)<<" "<<className<<"::"<<name->chars<<"(int index) const {\n";
                 }
                 if (value) {
@@ -1618,7 +1618,7 @@ void defineField(pPBJParser ctx, pANTLR3_STRING type, pANTLR3_STRING name, pANTL
                 }
                 if (isMessageType) {
                     sendTabs(ctx,CPPFP,value?3:2)<<"return "<<cppType<<"(*const_cast<"<<SCOPE_TOP(NameSpace)->internalNamespace->chars<<"::";
-                    
+
                     std::stringstream ss;
                     if(isSubMessage)
                     {
@@ -1709,7 +1709,7 @@ void defineField(pPBJParser ctx, pANTLR3_STRING type, pANTLR3_STRING name, pANTL
                 sendTabs(ctx,CPPFP,1)<<"}\n";
             }
         }else {
-            
+
             if(HPPFP && CPPFP)
             {
                if (strcmp((char*)type->chars,"bytes")==0||strcmp((char*)type->chars,"string")==0) {//strings and bytes have special setter functionality
@@ -1726,7 +1726,7 @@ void defineField(pPBJParser ctx, pANTLR3_STRING type, pANTLR3_STRING name, pANTL
                     }
                 }
                 if (isMessageType||isEnum) {
-                    sendTabs(ctx,HPPFP,1)<<"bool has_"<<name->chars<<"() const;\n"; 
+                    sendTabs(ctx,HPPFP,1)<<"bool has_"<<name->chars<<"() const;\n";
                     sendTabs(ctx,CPPFP,1)<<"bool "<<className<<"::has_"<<name->chars<<"() const {return super->has_"<<name->chars<<"();}\n";
                     sendTabs(ctx,csShared,1)<<"public bool Has"<<uname->chars<<"{ get {return super.Has"<<uname->chars<<";} }\n";
                 }else if (isFlag) {
@@ -1754,7 +1754,7 @@ void defineField(pPBJParser ctx, pANTLR3_STRING type, pANTLR3_STRING name, pANTL
                 sendTabs(ctx,HPPFP,1)<<""<<cppType<<" "<<name->chars<<"() const ;\n";
                 if(isSubMessage)
                 {
-                
+
                    sendTabs(ctx,CPPFP,1)<<""<<className<<"::"<<cppType<<" "<<className<<"::"<<name->chars<<"() const {\n";
                 }
                 else
@@ -1768,20 +1768,20 @@ void defineField(pPBJParser ctx, pANTLR3_STRING type, pANTLR3_STRING name, pANTL
                     }
                     std::stringstream ss;
                     sendCppNs(ctx, ss);
-                    std::string nspace = ss.str(); 
+                    std::string nspace = ss.str();
 
                     if(!isFullyQualified){
                       sendTabs(ctx,CPPFP,1)<<""<<cppType<<" "<<className<<"::"<<name->chars<<"() const {\n";
                     }
                     else
                     {
-                         
+
                       sendTabs(ctx,CPPFP,1)<<""<<cppType<<" "<<className<<"::"<<name->chars<<"() const {\n";
                     }
                   }
                   else
                   {
-                  
+
                     sendTabs(ctx,CPPFP,1)<<""<<cppType<<" "<<className<<"::"<<name->chars<<"() const {\n";
                   }
                 }
@@ -1793,20 +1793,20 @@ void defineField(pPBJParser ctx, pANTLR3_STRING type, pANTLR3_STRING name, pANTL
                     sendCppNs(ctx, ss);
                     std::string fullCppType;
 
-                    
+
                     if(isSubMessage)
                     {
-                     
+
                       sendTabs(ctx,CPPFP,3)<<"return "<<className<<"::"<<cppType<<"(*const_cast<";
                       CPPFP<< insertInternalNamespace2(cppType, ss.str(), (char*)SCOPE_TOP(NameSpace)->internalNamespace->chars);
-                    
+
                     }
                     else
                     {
                       sendTabs(ctx,CPPFP,3)<<"return "<<cppType<<"(*const_cast<";
                       CPPFP<< insertInternalNamespace(cppType, (char*)SCOPE_TOP(NameSpace)->internalNamespace->chars);
                     }
-                     
+
                     //std::cout << "\n\n\n CPP TYPE = " << cppType << " cppns is " << ss.str() << "and the internalNamespace is " << (char*)SCOPE_TOP(NameSpace)->internalNamespace->chars << " and the fullcppType is " << fullCppType << "\n\n\n";
                     CPPFP<<"*>(&super->"<<name->chars<<"()));\n";
 
@@ -1852,8 +1852,8 @@ void defineField(pPBJParser ctx, pANTLR3_STRING type, pANTLR3_STRING name, pANTL
                 sendTabs(ctx,CPPFP,1)<<"}\n";
                 sendTabs(ctx,csShared,1)<<"}\n";
 
- 
-            
+
+
             }
 
         }
@@ -1881,7 +1881,7 @@ void defineField(pPBJParser ctx, pANTLR3_STRING type, pANTLR3_STRING name, pANTL
             }
             else
             {
-            
+
               sendTabs(ctx,CPPFP,1)<<"PBJ::RefClass<"<<cppIFace<<"> "<<className<<"::"<<(isRepeated?"add":"mutable")<<"_"<<name->chars<<"() {\n";
             }
             sendTabs(ctx,CPPFP,2)<<""<<cppIFace<<" retval(*super->"<<(isRepeated?"add":"mutable")<<"_"<<name->chars<<"());\n";
@@ -1935,7 +1935,7 @@ void printEnum(pPBJParser ctx, int offset, pANTLR3_STRING id, pANTLR3_LIST enumV
         sendTabs(ctx,1)<<"};\n";
         sendTabs(ctx,CSFP,1)<<"};\n";
     }
-   
+
 */
 
     if (HPPFP){
@@ -2069,7 +2069,7 @@ void defineMessageEnd(pPBJParser ctx, pANTLR3_STRING id){
         }
         sendTabs(ctx,HPPFP,0)<<"};\n";
 
-        
+
         FPPFP<<"class "<<id->chars<<";\n";
         sendTabs(ctx,HPPFP,0)<<"class " <<SCOPE_TOP(NameSpace)->export_macro->chars<< " "<<id->chars<<" : public "<<iface<<" {\n";
         sendTabs(ctx,HPPFP,0)<<"protected:\n";
@@ -2080,7 +2080,7 @@ void defineMessageEnd(pPBJParser ctx, pANTLR3_STRING id){
 
         sendTabs(ctx,HPPFP,1)<<id->chars<<"(const "<<SCOPE_TOP(NameSpace)->internalNamespace->chars<<"::";
         sendCppNs(ctx,HPPFP)<<" &copy);\n";
-        
+
         sendTabs(ctx,HPPFP,1)<<id->chars<<"("<<SCOPE_TOP(NameSpace)->internalNamespace->chars<<"::";
         sendCppNs(ctx,HPPFP)<<" &reference);\n";
 
@@ -2100,9 +2100,9 @@ void defineMessageEnd(pPBJParser ctx, pANTLR3_STRING id){
 
     }
     if (CPPFP) {
-        
+
         std::string justName=iface;
-        
+
         if(subMessage){
           std::stringstream s;
           sendCppNs2(ctx, s);
@@ -2209,11 +2209,11 @@ void defineMessageEnd(pPBJParser ctx, pANTLR3_STRING id){
           if(ss.str().size() > 0)
           {
             cppName = ss.str();
-            cppNs = ss.str() + "::"; 
+            cppNs = ss.str() + "::";
           }
           else
           {
-            
+
           }
         //}
 
